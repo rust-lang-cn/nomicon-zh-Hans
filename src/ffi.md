@@ -531,7 +531,7 @@ pub extern "C" fn hello_rust() -> *const u8 {
 # fn main() {}
 ```
 
-`extern "C"`使这个函数遵守 C 的调用约定，正如上面“[外部调用约定](ffi.html#foreign-calling-conventions)”中所讨论的。`no_mangle`属性关闭了 Rust 的 name mangling 功能，这样就更容易链接到。
+`extern "C"`使这个函数遵守 C 的调用约定，正如上面“[外部调用约定](ffi.html#外部调用规约)”中所讨论的。`no_mangle`属性关闭了 Rust 的 name mangling 功能，这样就更容易链接到。
 
 ## FFI 和 panic
 
