@@ -17,7 +17,7 @@ Safe Rust 和 Unsafe Rust 之间的边界是由`unsafe`关键字控制的，从�
 
 * [`slice::get_unchecked`][get_unchecked]，它执行未经检查的索引，允许随意地违反内存安全。
 * [`mem::transmute`][transmute]将一些值重新解释为具有给定的类型，以任意的方式绕过类型安全（详见[conversions]）。
-* 每一个指向一个Sized类型的原始指针都有一个[`offset`][ptr_offset]方法，如果传递的偏移量不在[“界内”][ptr_offset]，则该调用是未定义行为。
+* 每一个指向一个 Sized 类型的原始指针都有一个[`offset`][ptr_offset]方法，如果传递的偏移量不在[“界内”][ptr_offset]，则该调用是未定义行为。
 * 所有 FFI（Foreign Function Interface）函数的调用都是`不安全`的，因为其他语言可以进行 Rust 编译器无法检查的任意操作。
 
 从 Rust 1.29.2 开始，标准库定义了以下不安全特性（还有其他特性，但还没有稳定下来，有些可能永远不会稳定下来）：
