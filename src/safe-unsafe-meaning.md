@@ -2,7 +2,8 @@
 
 安全 Rust 和不安全 Rust 之间的关系是什么？它们如何交互？
 
-Safe Rust 和 Unsafe Rust 之间的边界是由`unsafe`关键字控制的，而`unsafe`作为它们之间的接口。这就是为什么我们可以说 Safe Rust 是一种安全的语言：所有不安全的部分都被保留在“unsafe”边界之后。如果你愿意，你甚至可以把`#![forbid(unsafe_code)]`扔进你的代码库，以静态地保证你只写安全的 Rust。
+
+Safe Rust 和 Unsafe Rust 之间的边界是由`unsafe`关键字控制的，从而`unsafe`承接了它们之间的交互的桥梁。这就是为什么我们可以说 Safe Rust 是一种安全的语言：所有不安全的部分都被保留在“unsafe”边界之后。如果你愿意，你甚至可以把`#![forbid(unsafe_code)]`扔进你的代码库，以静态地保证你只写安全的 Rust。
 
 `unsafe`关键字有两个用途：声明存在编译器无法检查的契约，以及声明程序员已经检查过这些契约的满足。
 
