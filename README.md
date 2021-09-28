@@ -58,6 +58,8 @@ sh linkcheck.sh --all nomicon-zh-Hans
 
 欢迎大家一起参与《Rust 秘典》的中文简体翻译，如果你觉得有可改善之处欢迎直接 PR，我会尽快处理；或者如果你不太确定是否需要更改，也可以提一个 Issue。
 
+翻译风格指南：https://zh-style-guide.readthedocs.io/
+
 ## RoadMap
 
 - [ ] 完成代码中注释的翻译
