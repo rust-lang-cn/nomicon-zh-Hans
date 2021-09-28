@@ -22,11 +22,11 @@ let z = &y;
 
 <!-- ignore: desugared code -->
 ```rust,ignore
-// NOTE: `'a: {` and `&'b x` is not valid syntax!
+// NOTE: `'a: {` 和 `&'b x` 不是有效的语法，这里只是为了说明lifetime的概念
 'a: {
     let x: i32 = 0;
     'b: {
-        // lifetime used is 'b because that's good enough.
+        // y 的生命周期会被编译器设置为 `'b`，因为这已经足够好(范围足够小)
         let y: &'b i32 = &'b x;
         'c: {
             // ditto on 'c
@@ -54,8 +54,7 @@ z = y;
     'b: {
         let z: &'b i32;
         'c: {
-            // Must use 'b here because this reference is
-            // being passed to that scope.
+            // y 的生命周期一定为'b，因为y被传递到了'c这个作用域之外
             let y: &'b i32 = &'b x;
             z = y;
         }
@@ -105,10 +104,9 @@ fn main() {
     'c: {
         let x: u32 = 0;
         'd: {
-            // An anonymous scope is introduced because the borrow does not
-            // need to last for the whole scope x is valid for. The return
-            // of as_str must find a str somewhere before this function
-            // call. Obviously not happening.
+            // 这里引入了一个匿名作用域，因为借用不需要在整个x的作用域内生效
+            // as_str的生命周期标识表示，这个函数必须返回一个在函数调用之前就存在的str的引用
+            // 事实显然不是这样
             println!("{}", as_str::<'d>(&'d x));
         }
     }
@@ -143,12 +141,10 @@ println!("{}", x);
 'a: {
     let mut data: Vec<i32> = vec![1, 2, 3];
     'b: {
-        // 'b is as big as we need this borrow to be
-        // (just need to get to `println!`)
+        // `'b` 这个生命周期标识足够小，刚好够我们 println!
         let x: &'b i32 = Index::index::<'b>(&'b data, 0);
         'c: {
-            // Temporary scope because we don't need the
-            // &mut to last any longer.
+            // 这是一个函数调用作用域，我们只需要一个短暂的 `&mut data` 即可
             Vec::push(&'c mut data, 4);
         }
         println!("{}", x);
@@ -172,7 +168,8 @@ println!("{}", x);
 let mut data = vec![1, 2, 3];
 let x = &data[0];
 println!("{}", x);
-// This is OK, x is no longer needed
+// 这是OK的
+// 因为不再需要使用x了，编译器也就缩短了x的生命周期，在这里结束x的一生
 data.push(4);
 ```
 
@@ -190,7 +187,7 @@ let mut data = vec![1, 2, 3];
 let x = X(&data[0]);
 println!("{:?}", x);
 data.push(4);
-// Here, the destructor is run and therefore this'll fail to compile.
+// 编译器会在这里自动插入 `drop` 函数，也就意味着我们会访问X中引用的变量，因此拒绝编译
 ```
 
 让编译器相信`x`不再有效的一个方法是在`data.push(4)`之前使用`drop(x)`。
@@ -203,11 +200,11 @@ let mut data = vec![1, 2, 3];
 let x = &data[0];
 
 if some_condition() {
-    println!("{}", x); // This is the last use of `x` in this branch
-    data.push(4);      // So we can push here
+    println!("{}", x); // 这是这个分支当中最后一次使用x这个引用
+    data.push(4);      // 因此在这里push是ok的
 } else {
-    // There's no use of `x` in here, so effectively the last use is the
-    // creation of x at the top of the example.
+    // 这里不存在对x的使用，对于这个分支来说
+    // x 创建即销毁
     data.push(5);
 }
 ```
@@ -216,12 +213,12 @@ if some_condition() {
 
 ```rust
 let mut data = vec![1, 2, 3];
-// This mut allows us to change where the reference points to
+// 变量x是可变的，因此我们可以修改x指向的内容
 let mut x = &data[0];
 
-println!("{}", x); // Last use of this borrow
+println!("{}", x); // 最后一次使用这个借用
 data.push(4);
-x = &data[3]; // We start a new borrow here
+x = &data[3]; // x在这里新借用了一个新的变量
 println!("{}", x);
 ```
 

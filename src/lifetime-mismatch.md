@@ -59,13 +59,9 @@ fn main() {
 }
 ```
 
-The lifetime system is forced to extend the `&mut foo` to have lifetime `'c`, due to the lifetime of `loan` and `mutate_and_share`'s signature. Then when we try to call `share`, and it sees we're trying to alias that `&'c mut foo` and blows up in our face!
-
-This program is clearly correct according to the reference semantics we actually care about, but the lifetime system is too coarse-grained to handle that.
-
 由于`loan`的生命周期和`mutate_and_share`的签名，生命周期系统被迫将`&mut foo`扩展为`'c`的生命周期。然后当我们试图调用`share`时，它看到我们试图别名`&'c mut foo`，然后就炸了！
 
-根据我们真正关心的引用语义，这个程序显然是正确的，但是生命周期系统太蠢了，无法处理这个问题。
+根据我们真正关心的引用语义，这个程序显然是正确的，但是生命周期系统太蠢了(原话是粗糙)，无法处理这个问题。
 
 ## 不正确地缩减借用
 
@@ -89,7 +85,7 @@ where
 }
 ```
 
-由于所施加的生命周期限制，`&mut map`的生命周期与其他可变的借用重叠，导致编译错误：
+由于所施加的生命周期限制，`&mut map`的生命周期与其他可变的借用`重叠`，导致编译错误：
 
 ```text
 error[E0499]: cannot borrow `*map` as mutable more than once at a time

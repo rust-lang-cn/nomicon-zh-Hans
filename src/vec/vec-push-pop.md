@@ -17,7 +17,7 @@ pub fn push(&mut self, elem: T) {
         ptr::write(self.ptr.as_ptr().add(self.len), elem);
     }
 
-    // Can't fail, we'll OOM first.
+    // 不可能出错，因为出错之前一定会 OOM(out of memory)
     self.len += 1;
 }
 ```

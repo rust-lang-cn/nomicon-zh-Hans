@@ -88,17 +88,17 @@ impl<T> Vec<T> {
         let (new_cap, new_layout) = if self.cap == 0 {
             (1, Layout::array::<T>(1).unwrap())
         } else {
-            // This can't overflow since self.cap <= isize::MAX.
+            // 因为 self.cap <= isize::MAX，所以不会溢出
             let new_cap = 2 * self.cap;
 
-            // `Layout::array` checks that the number of bytes is <= usize::MAX,
-            // but this is redundant since old_layout.size() <= isize::MAX,
-            // so the `unwrap` should never fail.
+            // `Layout::array` 会检查申请的空间是否满足 <= usize::MAX,
+            // 但是因为 old_layout.size() <= isize::MAX,
+            // 所以这里的 unwrap 永远不可能失败
             let new_layout = Layout::array::<T>(new_cap).unwrap();
             (new_cap, new_layout)
         };
 
-        // Ensure that the new allocation doesn't exceed `isize::MAX` bytes.
+        // 保证新申请的内存没有超出`isize::MAX`字节的大小.
         assert!(new_layout.size() <= isize::MAX as usize, "Allocation too large");
 
         let new_ptr = if self.cap == 0 {
@@ -109,7 +109,7 @@ impl<T> Vec<T> {
             unsafe { alloc::realloc(old_ptr, old_layout, new_layout.size()) }
         };
 
-        // If allocation fails, `new_ptr` will be null, in which case we abort.
+        // 如果分配失败，`new_ptr` 就会称为空指针，我们需要对应abort的操作
         self.ptr = match NonNull::new(new_ptr as *mut T) {
             Some(p) => p,
             None => alloc::handle_alloc_error(new_layout),

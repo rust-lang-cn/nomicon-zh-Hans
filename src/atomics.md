@@ -101,17 +101,17 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 
 fn main() {
-    let lock = Arc::new(AtomicBool::new(false)); // value answers "am I locked?"
+    let lock = Arc::new(AtomicBool::new(false)); // 我上锁了吗
 
-    // ... distribute lock to threads somehow ...
+    // ... 用某种方式将锁分发到各个线程(thread::spawn) ...
 
-    // Try to acquire the lock by setting it to true
+    // 尝试将原子变量设置为true，以此来获得锁
     while lock.compare_and_swap(false, true, Ordering::Acquire) { }
     // broke out of the loop, so we successfully acquired the lock!
 
-    // ... scary data accesses ...
+    // ... 恐怖的数据访问 ...
 
-    // ok we're done, release the lock
+    // 工作完成辽，释放锁
     lock.store(false, Ordering::Release);
 }
 ```

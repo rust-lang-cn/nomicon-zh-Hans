@@ -8,11 +8,11 @@
 
 Rust 给你提供了以下方式来布置复合数据。
 
-* structs （命名复合类型）
-* tuples （匿名复合类型）
-* arrays （同质复合类型）
-* enums （命名总和类型 —— 有标签的联合体）
-* unions （无标签的联合体）
+* structs （命名复合类型 named product types）
+* tuples （匿名复合类型 anonymous product types）
+* arrays （同质复合类型 homogeneous product types）
+* enums （命名总和类型 —— 有标签的联合体 named sum types -- tagged unions）
+* unions （无标签的联合体 untagged unions）
 
 如果一个枚举的变体都没有相关联的数据，那么它就被称为*无域*。
 
@@ -112,7 +112,7 @@ enum Foo {
 
 ```rust
 struct FooRepr {
-    data: u64, // this is either a u64, u32, or u8 based on `tag`
+    data: u64, // 根据tag的不同，这一项可以为u64，u32，或者u8
     tag: u8,   // 0 = A, 1 = B, 2 = C
 }
 ```

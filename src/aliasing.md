@@ -22,7 +22,7 @@ fn compute(input: &u32, output: &mut u32) {
     if *input > 5 {
         *output *= 2;
     }
-    // remember that `output` will be `2` if `input > 10`
+    // 记住一点: 如果 `input>10`，那么 `output` 永远为 `2`
 }
 ```
 
@@ -32,9 +32,10 @@ fn compute(input: &u32, output: &mut u32) {
 fn compute(input: &u32, output: &mut u32) {
     let cached_input = *input; // keep `*input` in a register
     if cached_input > 10 {
-        // If the input is greater than 10, the previous code would set the output to 1 and then double it,
-        // resulting in an output of 2 (because `>10` implies `>5`).
-        // Here, we avoid the double assignment and just set it directly to 2.
+        // 如果输入比10大, 优化之前的代码会将output设置为1，然后乘以2
+        // 结果一定返回 `2` (因为 `>10` 包括了 `>5` 的情况)
+        // 因此在这里，我们可以进行优化
+        // 避免对于 output 赋值两次，直接将 output 设置为最后的结果 `2`
         *output = 2;
     } else if cached_input > 5 {
         *output *= 2;
@@ -51,7 +52,7 @@ fn compute(input: &u32, output: &mut u32) {
                     //  input ==  output == 0xabad1dea
                     // *input == *output == 20
 if *input > 10 {    // true  (*input == 20)
-    *output = 1;    // also overwrites *input, because they are the same
+    *output = 1;    // 同时覆写了 input 引用的内容，因为它们实际上引用了同一块内存
 }
 if *input > 5 {     // false (*input == 1)
     *output *= 2;

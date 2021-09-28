@@ -39,7 +39,7 @@ fn love(pet: Animal) {
 <!-- ignore: simplified code -->
 ```rust,ignore
 let mr_snuggles: Cat = ...;
-love(mr_snuggles);         // ERROR: expected Animal, found Cat
+love(mr_snuggles);         // ERROR: 期待是一个Animal，实际上却是Cat
 ```
 
 Snuggles 先生是一只猫，而猫并不能够*精确地*认为和动物相等，所以我们不能爱他！。😿
@@ -63,15 +63,15 @@ Snuggles 先生是一只猫，而猫并不能够*精确地*认为和动物相等
 fn evil_feeder(pet: &mut Animal) {
     let spike: Dog = ...;
 
-    // `pet` is an Animal, and Dog is a subtype of Animal,
-    // so this should be fine, right..?
+    // `pet` 是一个Animal，而Dog是Animal的子类型
+    // 所以这里应该是正确的，对吗...?
     *pet = spike;
 }
 
 fn main() {
     let mut mr_snuggles: Cat = ...;
-    evil_feeder(&mut mr_snuggles);  // Replaces mr_snuggles with a Dog
-    mr_snuggles.meow();             // OH NO, MEOWING DOG!
+    evil_feeder(&mut mr_snuggles);  // 将 mr_snuggles 替换为 Dog
+    mr_snuggles.meow();             // OMG，这里发出了狗叫, MEOWING DOG!
 }
 ```
 
@@ -145,15 +145,15 @@ Variance 是事情变得有点复杂的地方。
 fn evil_feeder(pet: &mut Animal) {
     let spike: Dog = ...;
 
-    // `pet` is an Animal, and Dog is a subtype of Animal,
-    // so this should be fine, right..?
+    // `pet` 是一个Animal，而Dog是Animal的子类型
+    // 所以这里应该是正确的，对吗...?
     *pet = spike;
 }
 
 fn main() {
     let mut mr_snuggles: Cat = ...;
-    evil_feeder(&mut mr_snuggles);  // Replaces mr_snuggles with a Dog
-    mr_snuggles.meow();             // OH NO, MEOWING DOG!
+    evil_feeder(&mut mr_snuggles);  // 将 mr_snuggles 替换为 Dog
+    mr_snuggles.meow();             // OMG，这里发出了狗叫, MEOWING DOG!
 }
 ```
 
@@ -188,10 +188,10 @@ fn main() {
     let mut mr_snuggles: &'static str = "meow! :3";  // mr. snuggles forever!!
     {
         let spike = String::from("bark! >:V");
-        let spike_str: &str = &spike;                // Only lives for the block
-        evil_feeder(&mut mr_snuggles, spike_str);    // EVIL!
+        let spike_str: &str = &spike;                // 仅仅在这个block存在
+        evil_feeder(&mut mr_snuggles, spike_str);    // 恶魔降临!
     }
-    println!("{}", mr_snuggles);                     // Use after free?
+    println!("{}", mr_snuggles);                     // use-after-free问题?
 }
 ```
 

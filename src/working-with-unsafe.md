@@ -39,19 +39,18 @@ fn index(idx: usize, arr: &[u8]) -> Option<u8> {
 ```rust
 use std::ptr;
 
-// Note: This definition is naive. See the chapter on implementing Vec.
+// 注意：这个定义十分简单。参考实现Vec的章节
 pub struct Vec<T> {
     ptr: *mut T,
     len: usize,
     cap: usize,
 }
 
-// Note this implementation does not correctly handle zero-sized types.
-// See the chapter on implementing Vec.
+// 注意：这个实现未考虑大小为 `0` 的类型。参考实现Vec的章节
 impl<T> Vec<T> {
     pub fn push(&mut self, elem: T) {
         if self.len == self.cap {
-            // not important for this example
+            // 这里并不重要
             self.reallocate();
         }
         unsafe {

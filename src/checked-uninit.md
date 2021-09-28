@@ -12,7 +12,7 @@ fn main() {
 ```text
   |
 3 |     println!("{}", x);
-  |                    ^ use of possibly uninitialized `x`
+  |                    ^ 使用了没有初始化的 `x`
 ```
 
 这基于一个基本的分支分析：每个分支都必须在第一次使用`x`之前给它赋值。有趣的是，如果每个分支恰好赋值一次，Rust 不要求变量是可变的，以执行延迟初始化。然而这个分析并没有利用常量分析或类似的东西。所以下述的代码是可以编译的：
@@ -46,7 +46,7 @@ fn main() {
 ```text
   |
 6 |     println!("{}", x);
-  |                    ^ use of possibly uninitialized `x`
+  |                    ^ 使用了可能没有初始化的 `x`
 ```
 
 这个又可以了：
@@ -58,8 +58,8 @@ fn main() {
         x = 1;
         println!("{}", x);
     }
-    // Don't care that there are branches where it's not initialized
-    // since we don't use the value in those branches
+    // 不需要担心还有的分支没有初始化
+    // 因为我们实际上并没有在别的分支使用x
 }
 ```
 
@@ -69,30 +69,29 @@ fn main() {
 let x: i32;
 
 loop {
-    // Rust doesn't understand that this branch will be taken unconditionally,
-    // because it relies on actual values.
+    // Rust不知道这个分支会被无条件执行
+    // 因为它依赖于实际值
     if true {
-        // But it does understand that it will only be taken once because
-        // we unconditionally break out of it. Therefore `x` doesn't
-        // need to be marked as mutable.
+        // 但是它确实知道循环只会有一次
+        // 因为我们会无条件break
+        // 所以x不需要是可变的        
         x = 0;
         break;
     }
 }
-// It also knows that it's impossible to get here without reaching the break.
-// And therefore that `x` must be initialized here!
+// Rust也知道如果没有执行break的话，代码不会运行到这里
+// 所以一旦运行到这里,x 一定已经初始化了
 println!("{}", x);
 ```
 
-If a value is moved out of a variable, that variable becomes logically uninitialized if the type of the value isn't Copy. That is:
 如果一个值从一个变量中移出，并且该值的类型不是 Copy，该变量在逻辑上就会变成未初始化。也就是说：
 
 ```rust
 fn main() {
     let x = 0;
     let y = Box::new(0);
-    let z1 = x; // x is still valid because i32 is Copy
-    let z2 = y; // y is now logically uninitialized because Box isn't Copy
+    let z1 = x; // x 仍然是有效的，因为 i32 是可以Copy的
+    let z2 = y; // y 在逻辑上未初始化，因为 Box 是不能Copy的
 }
 ```
 
@@ -101,8 +100,8 @@ fn main() {
 ```rust
 fn main() {
     let mut y = Box::new(0);
-    let z = y; // y is now logically uninitialized because Box isn't Copy
-    y = Box::new(1); // reinitialize y
+    let z = y; // y 现在逻辑上未初始化，因为 Box 不能 Copy
+    y = Box::new(1); // 重新初始化 y
 }
 ```
 

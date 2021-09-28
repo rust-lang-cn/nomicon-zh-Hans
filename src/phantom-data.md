@@ -33,7 +33,7 @@ struct Iter<'a, T: 'a> {
 
 ```rust
 struct Vec<T> {
-    data: *const T, // *const for variance!
+    data: *const T, // *const 是可变异的！ 
     len: usize,
     cap: usize,
 }
@@ -51,7 +51,7 @@ struct Vec<T> {
 use std::marker;
 
 struct Vec<T> {
-    data: *const T, // *const for variance!
+    data: *const T, // *const 是可变异的！
     len: usize,
     cap: usize,
     _marker: marker::PhantomData<T>,
@@ -67,7 +67,8 @@ struct Vec<T> {
 
 ## `PhantomData`模式表
 
-下面是一个关于所有可以使用`PhantomData`的神奇方式的表格：
+下面是一个关于所有可以使用`PhantomData`的神奇方式的表格：  
+(covariant:协变，invariant:不变，contravariant:逆变)
 
 | Phantom type                | `'a`      | `T`                       |
 |-----------------------------|-----------|---------------------------|

@@ -40,12 +40,12 @@ pub struct IntoIter<T> {
 ```rust,ignore
 impl<T> Vec<T> {
     pub fn into_iter(self) -> IntoIter<T> {
-        // Can't destructure Vec since it's Drop
+        // 因为Vec实现了Drop，所以我们不能销毁它
         let ptr = self.ptr;
         let cap = self.cap;
         let len = self.len;
 
-        // Make sure not to drop Vec since that will free the buffer
+        // 确保Vec不会被drop，因为那样会释放内存
         mem::forget(self);
 
         unsafe {
@@ -54,7 +54,7 @@ impl<T> Vec<T> {
                 cap: cap,
                 start: ptr.as_ptr(),
                 end: if cap == 0 {
-                    // can't offset off this pointer, it's not allocated!
+                    // 不能通过这个指针获取偏移，因为没有分配内存
                     ptr.as_ptr()
                 } else {
                     ptr.as_ptr().add(len)
@@ -117,7 +117,7 @@ impl<T> DoubleEndedIterator for IntoIter<T> {
 impl<T> Drop for IntoIter<T> {
     fn drop(&mut self) {
         if self.cap != 0 {
-            // drop any remaining elements
+            // 将剩下的元素 drop
             for _ in &mut *self {}
             let layout = Layout::array::<T>(self.cap).unwrap();
             unsafe {

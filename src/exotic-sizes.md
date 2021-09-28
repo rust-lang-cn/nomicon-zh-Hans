@@ -18,7 +18,7 @@ Trait 对象代表某种类型，实现了它所指定的 Trait。确切的原�
 结构实际上可以直接存储一个 DST 作为其最后一个字段，但这也会使它们自身成为一个 DST：
 
 ```rust
-// Can't be stored on the stack directly
+// 不能直接存储在栈上
 struct MySuperSlice {
     info: u32,
     data: [u8],
@@ -41,7 +41,7 @@ fn main() {
 
     let dynamic: &MySuperSliceable<[u8]> = &sized;
 
-    // prints: "17 [0, 0, 0, 0, 0, 0, 0, 0]"
+    // 输出: "17 [0, 0, 0, 0, 0, 0, 0, 0]"
     println!("{} {:?}", dynamic.info, &dynamic.data);
 }
 ```
@@ -53,13 +53,13 @@ fn main() {
 Rust 也允许类型指定他们不占空间：
 
 ```rust
-struct Nothing; // No fields = no size
+struct Nothing; // 无字段意味着没有大小
 
-// All fields have no size = no size
+// 所有字段都无大小意味着整个结构体无大小
 struct LotsOfNothing {
     foo: Nothing,
-    qux: (),      // empty tuple has no size
-    baz: [u8; 0], // empty array has no size
+    qux: (),      // 空元组无大小
+    baz: [u8; 0], // 空数组无大小
 }
 ```
 
@@ -95,7 +95,7 @@ enum Void {}
 
 let res: Result<u32, Void> = Ok(0);
 
-// Err doesn't exist anymore, so Ok is actually irrefutable.
+// 不存在 Err 的情况，所以 Ok 实际上永远都能匹配成功
 let Ok(num) = res;
 ```
 

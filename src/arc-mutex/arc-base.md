@@ -12,15 +12,13 @@
 ```rust,ignore
 impl<T> Arc<T> {
     pub fn new(data: T) -> Arc<T> {
-        // We start the reference count at 1, as that first reference is the
-        // current pointer.
+        // 当前的指针就是第一个引用，因此初始时设置 count=1
         let boxed = Box::new(ArcInner {
             rc: AtomicUsize::new(1),
             data,
         });
         Arc {
-            // It is okay to call `.unwrap()` here as we get a pointer from
-            // `Box::into_raw` which is guaranteed to not be null.
+            // 我们从 Box::into_raw 得到该指针，因此使用 `.unwrap()` 是完全OK的 
             ptr: NonNull::new(Box::into_raw(boxed)).unwrap(),
             phantom: PhantomData,
         }
@@ -98,15 +96,13 @@ use std::ops::Deref;
 
 impl<T> Arc<T> {
     pub fn new(data: T) -> Arc<T> {
-        // We start the reference count at 1, as that first reference is the
-        // current pointer.
+        // 当前的指针就是第一个引用，因此初始时设置 count=1
         let boxed = Box::new(ArcInner {
             rc: AtomicUsize::new(1),
             data,
         });
         Arc {
-            // It is okay to call `.unwrap()` here as we get a pointer from
-            // `Box::into_raw` which is guaranteed to not be null.
+            // 我们从 Box::into_raw 得到该指针，因此使用 `.unwrap()` 是完全OK的 
             ptr: NonNull::new(Box::into_raw(boxed)).unwrap(),
             phantom: PhantomData,
         }

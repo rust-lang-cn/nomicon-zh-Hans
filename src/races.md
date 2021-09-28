@@ -20,28 +20,23 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 
 let data = vec![1, 2, 3, 4];
-// Arc so that the memory the AtomicUsize is stored in still exists for
-// the other thread to increment, even if we completely finish executing
-// before it. Rust won't compile the program without it, because of the
-// lifetime requirements of thread::spawn!
+// 使用 Arc，这样即使程序执行完毕，存储 AtomicUsize的内存依然存在
+// 否则由于 thread::spawn! 的生命周期限制，Rust 不会为我们编译这段代码
 let idx = Arc::new(AtomicUsize::new(0));
 let other_idx = idx.clone();
 
-// `move` captures other_idx by-value, moving it into this thread
+// move 获得 `other_idx` 的所有权，将它移入线程
 thread::spawn(move || {
-    // It's ok to mutate idx because this value
-    // is an atomic, so it can't cause a Data Race.
+    // 可以修改 other_idx 的值，因为这是一个原子变量，不存在数据竞争问题
     other_idx.fetch_add(10, Ordering::SeqCst);
 });
 
-// Index with the value loaded from the atomic. This is safe because we
-// read the atomic memory only once, and then pass a copy of that value
-// to the Vec's indexing implementation. This indexing will be correctly
-// bounds checked, and there's no chance of the value getting changed
-// in the middle. However our program may panic if the thread we spawned
-// managed to increment before this ran. A race condition because correct
-// program execution (panicking is rarely correct) depends on order of
-// thread execution.
+// 用原子中的值做索引是安全的，因为我们只读取了一次原子的内存，
+// 然后将读出的值的拷贝传递给Vec做为索引。
+// 索引过程可以做正确的边界检查，并且在执行索引期间这个值也不会发生改变。
+// 但是，如果上面的线程在执行这句代码之前增加了这个值，这段代码会panic。
+// 这就是一个*竞态*，因为程序的正确执行(panic几乎不可能是正确的)
+// 依赖于线程的执行顺序
 println!("{}", data[idx.load(Ordering::SeqCst)]);
 ```
 
@@ -55,18 +50,17 @@ let data = vec![1, 2, 3, 4];
 let idx = Arc::new(AtomicUsize::new(0));
 let other_idx = idx.clone();
 
-// `move` captures other_idx by-value, moving it into this thread
+// move 获得 `other_idx` 的所有权，将它移入新线程
 thread::spawn(move || {
-    // It's ok to mutate idx because this value
-    // is an atomic, so it can't cause a Data Race.
+    // 可以修改 other_idx 的值，因为这是一个原子变量，不存在数据竞争问题
     other_idx.fetch_add(10, Ordering::SeqCst);
 });
 
 if idx.load(Ordering::SeqCst) < data.len() {
     unsafe {
-        // Incorrectly loading the idx after we did the bounds check.
-        // It could have changed. This is a race condition, *and dangerous*
-        // because we decided to do `get_unchecked`, which is `unsafe`.
+        // 在边界检查之后读取idx的值是不正确的，因为它有可能已经改变了
+        // 这里就存在竞态，并且非常危险!
+        // 我们我们这里会做 `get_unchecked` 的操作, 而这个是 `unsafe` 的.
         println!("{}", data.get_unchecked(idx.load(Ordering::SeqCst)));
     }
 }

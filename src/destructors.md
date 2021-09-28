@@ -68,8 +68,7 @@ struct SuperBox<T> { my_box: Box<T> }
 impl<T> Drop for SuperBox<T> {
     fn drop(&mut self) {
         unsafe {
-            // Hyper-optimized: deallocate the box's contents for it
-            // without `drop`ing the contents
+            // 释放 `box` 的内容，而不是 `drop` `box` 的内容
             let c: NonNull<T> = self.my_box.ptr.into();
             Global.deallocate(c.cast::<u8>(), Layout::new::<T>());
         }
@@ -132,9 +131,8 @@ struct SuperBox<T> { my_box: Option<Box<T>> }
 impl<T> Drop for SuperBox<T> {
     fn drop(&mut self) {
         unsafe {
-            // Hyper-optimized: deallocate the box's contents for it
-            // without `drop`ing the contents. Need to set the `box`
-            // field as `None` to prevent Rust from trying to Drop it.
+            // 释放 box 的内容，而不是 drop box 的内容
+            // 需要将 box 字段设置为None,防止 Rust 对 box 成员可能存在的drop操作
             let my_box = self.my_box.take().unwrap();
             let c: NonNull<T> = my_box.ptr.into();
             Global.deallocate(c.cast(), Layout::new::<T>());

@@ -20,15 +20,13 @@ pub struct ArcInner<T> {
 
 impl<T> Arc<T> {
     pub fn new(data: T) -> Arc<T> {
-        // We start the reference count at 1, as that first reference is the
-        // current pointer.
+        // 当前的指针就是第一个引用，因此初始时设置 count=1
         let boxed = Box::new(ArcInner {
             rc: AtomicUsize::new(1),
             data,
         });
         Arc {
-            // It is okay to call `.unwrap()` here as we get a pointer from
-            // `Box::into_raw` which is guaranteed to not be null.
+            // 我们从 Box::into_raw 得到该指针，因此使用 `.unwrap()` 是完全OK的 
             ptr: NonNull::new(Box::into_raw(boxed)).unwrap(),
             phantom: PhantomData,
         }
@@ -50,9 +48,8 @@ impl<T> Deref for Arc<T> {
 impl<T> Clone for Arc<T> {
     fn clone(&self) -> Arc<T> {
         let inner = unsafe { self.ptr.as_ref() };
-        // Using a relaxed ordering is alright here as we don't need any atomic
-        // synchronization here as we're not modifying or accessing the inner
-        // data.
+        // 我们没有修改Arc中的数据，因此在这里不需要任何原子的同步操作
+        // 使用 relax 这种排序方式也就完全可行.
         let old_rc = inner.rc.fetch_add(1, Ordering::Relaxed);
 
         if old_rc >= isize::MAX as usize {
@@ -72,11 +69,11 @@ impl<T> Drop for Arc<T> {
         if inner.rc.fetch_sub(1, Ordering::Release) != 1 {
             return;
         }
-        // This fence is needed to prevent reordering of the use and deletion
-        // of the data.
+        // 我们需要防止针对 inner 的使用和删除的重排序
+        // 因此使用 fence 来进行保护是非常有必要.
         atomic::fence(Ordering::Acquire);
-        // This is safe as we know we have the last pointer to the `ArcInner`
-        // and that its pointer is valid.
+
+        // Safety: 我们知道这是最后一个对 ArcInner 的引用，并且这个指针是有效的
         unsafe { Box::from_raw(self.ptr.as_ptr()); }
     }
 }

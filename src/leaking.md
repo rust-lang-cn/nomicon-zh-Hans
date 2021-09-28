@@ -35,18 +35,18 @@
 let mut vec = vec![Box::new(0); 4];
 
 {
-    // start draining, vec can no longer be accessed
+    // 开始drain，vec无法被再次访问
     let mut drainer = vec.drain(..);
 
-    // pull out two elements and immediately drop them
+    // 从drain中取出两个元素，然后立刻销毁它们
     drainer.next();
     drainer.next();
 
-    // get rid of drainer, but don't call its destructor
+    // 销毁drainer，但是不调用它的drop函数
     mem::forget(drainer);
 }
 
-// Oops, vec[0] was dropped, we're reading a pointer into free'd memory!
+// Oops，vec[0] 已经被drop了，我们正在读一块已经释放的内存
 println!("{}", vec[0]);
 ```
 
@@ -76,7 +76,7 @@ struct RcBox<T> {
 impl<T> Rc<T> {
     fn new(data: T) -> Self {
         unsafe {
-            // Wouldn't it be nice if heap::allocate worked like this?
+            // 如果 heap::allocate 像这样不是很好吗?
             let ptr = heap::allocate::<RcBox<T>>();
             ptr::write(ptr, RcBox {
                 data: data,
@@ -99,7 +99,7 @@ impl<T> Drop for Rc<T> {
         unsafe {
             (*self.ptr).ref_count -= 1;
             if (*self.ptr).ref_count == 0 {
-                // drop the data and then free it
+                // drop 数据并且释放所占据的内存
                 ptr::read(self.ptr);
                 heap::deallocate(self.ptr);
             }
@@ -138,24 +138,22 @@ let mut data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 {
     let guards = vec![];
     for x in &mut data {
-        // Move the mutable reference into the closure, and execute
-        // it on a different thread. The closure has a lifetime bound
-        // by the lifetime of the mutable reference `x` we store in it.
-        // The guard that is returned is in turn assigned the lifetime
-        // of the closure, so it also mutably borrows `data` as `x` did.
-        // This means we cannot access `data` until the guard goes away.
+        // 将可变引用移入闭包，并且在另外一个线程执行闭包
+        // 闭包有一个生命周期，由其保存的引用的生命周期决定
+        // 返回的句柄和闭包也有相同的生命周期
+        // 所以它也和闭包一样可变引用了x
+        // 也就意味着在句柄(线程)销毁之前，我们不能访问x
         let guard = thread::scoped(move || {
             *x *= 2;
         });
-        // store the thread's guard for later
+        // 将线程句柄保存起来，之后使用
         guards.push(guard);
     }
-    // All guards are dropped here, forcing the threads to join
-    // (this thread blocks here until the others terminate).
-    // Once the threads join, the borrow expires and the data becomes
-    // accessible again in this thread.
+    // 所有的句柄在这里被drop, 强制线程Join(主线程在此阻塞)
+    // 等到所有的线程join之后，其借用的数据就过期了
+    // 因此又可以在主线程中访问了
 }
-// data is definitely mutated here.
+// 数据在这里已经完全改变了
 ```
 
 原则上，这完全是可行的！Rust 的所有权系统完美地保证了这一点！……只是它必须依赖于一个保证被调用到的析构器才是安全的。
@@ -165,15 +163,13 @@ let mut data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 let mut data = Box::new(0);
 {
     let guard = thread::scoped(|| {
-        // This is at best a data race. At worst, it's also a use-after-free.
+        // 好一点的情况是存在数据竞争，更坏的情况是 use-after-free
         *data += 1;
     });
-    // Because the guard is forgotten, expiring the loan without blocking this
-    // thread.
+    //  因为guard被主动forget了，不会调用drop方法，主线程不会阻塞等待guard结束
     mem::forget(guard);
 }
-// So the Box is dropped here while the scoped thread may or may not be trying
-// to access it.
+// Box在这里被销毁，而子线程不确定是否会在这里尝试访问它
 ```
 
 在这里，一个会运行的析构器对 API 来说是非常基本的。因此它不得不被废弃，而采用完全不同的设计。

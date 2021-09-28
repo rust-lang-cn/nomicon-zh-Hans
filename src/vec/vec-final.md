@@ -18,10 +18,11 @@ unsafe impl<T: Sync> Sync for RawVec<T> {}
 
 impl<T> RawVec<T> {
     fn new() -> Self {
-        // !0 is usize::MAX. This branch should be stripped at compile time.
+        // !0 is usize::MAX. 这一段分支代码在编译期间就可以计算出结果
         let cap = if mem::size_of::<T>() == 0 { !0 } else { 0 };
 
-        // `NonNull::dangling()` doubles as "unallocated" and "zero-sized allocation"
+        // `NonNull::dangling()` 有着`未分配内存(unallocated)`和
+        // `零尺寸(zero-sized allocation)`的双重含义
         RawVec {
             ptr: NonNull::dangling(),
             cap: cap,
@@ -30,24 +31,24 @@ impl<T> RawVec<T> {
     }
 
     fn grow(&mut self) {
-        // since we set the capacity to usize::MAX when T has size 0,
-        // getting to here necessarily means the Vec is overfull.
+        // 因为当 T 的尺寸为0时，我们设置了 cap 为 usize::MAX
+        // 这一步成立便意味着 Vec 溢出了.
         assert!(mem::size_of::<T>() != 0, "capacity overflow");
 
         let (new_cap, new_layout) = if self.cap == 0 {
             (1, Layout::array::<T>(1).unwrap())
         } else {
-            // This can't overflow because we ensure self.cap <= isize::MAX.
+            // 保证新申请的内存没有超出`isize::MAX`字节
             let new_cap = 2 * self.cap;
 
-            // `Layout::array` checks that the number of bytes is <= usize::MAX,
-            // but this is redundant since old_layout.size() <= isize::MAX,
-            // so the `unwrap` should never fail.
+            // `Layout::array` 会检查申请的空间是否满足 <= usize::MAX,
+            // 但是因为 old_layout.size() <= isize::MAX,
+            // 所以这里的 unwrap 永远不可能失败
             let new_layout = Layout::array::<T>(new_cap).unwrap();
             (new_cap, new_layout)
         };
 
-        // Ensure that the new allocation doesn't exceed `isize::MAX` bytes.
+        // 保证新申请的内存没有超出`isize::MAX`字节
         assert!(
             new_layout.size() <= isize::MAX as usize,
             "Allocation too large"
@@ -61,7 +62,7 @@ impl<T> RawVec<T> {
             unsafe { alloc::realloc(old_ptr, old_layout, new_layout.size()) }
         };
 
-        // If allocation fails, `new_ptr` will be null, in which case we abort.
+        // 如果分配失败，`new_ptr` 就会成为空指针，我们需要对应abort的操作
         self.ptr = match NonNull::new(new_ptr as *mut T) {
             Some(p) => p,
             None => alloc::handle_alloc_error(new_layout),
@@ -114,7 +115,7 @@ impl<T> Vec<T> {
             ptr::write(self.ptr().add(self.len), elem);
         }
 
-        // Can't overflow, we'll OOM first.
+        // 不会溢出，会先OOM
         self.len += 1;
     }
 
@@ -175,9 +176,9 @@ impl<T> Vec<T> {
         unsafe {
             let iter = RawValIter::new(&self);
 
-            // this is a mem::forget safety thing. If Drain is forgotten, we just
-            // leak the whole Vec's contents. Also we need to do this *eventually*
-            // anyway, so why not do it now?
+            // 这里事关 mem::forget 的安全
+            // 如果 Drain 被 forget , 我们就会泄露整个Vec的内存
+            // 既然我们始终要做这一步，为何不在这里完成呢?
             self.len = 0;
 
             Drain {
@@ -191,7 +192,7 @@ impl<T> Vec<T> {
 impl<T> Drop for Vec<T> {
     fn drop(&mut self) {
         while let Some(_) = self.pop() {}
-        // deallocation is handled by RawVec
+        // RawVec 来负责释放内存
     }
 }
 
@@ -272,7 +273,7 @@ impl<T> DoubleEndedIterator for RawValIter<T> {
 }
 
 pub struct IntoIter<T> {
-    _buf: RawVec<T>, // we don't actually care about this. Just need it to live.
+    _buf: RawVec<T>,    // 我们实际上并不关心这个，只需要他们保证分配的空间不被释放
     iter: RawValIter<T>,
 }
 
@@ -321,7 +322,7 @@ impl<'a, T> DoubleEndedIterator for Drain<'a, T> {
 
 impl<'a, T> Drop for Drain<'a, T> {
     fn drop(&mut self) {
-        // pre-drain the iter
+        // 消耗drain 
         for _ in &mut *self {}
     }
 }

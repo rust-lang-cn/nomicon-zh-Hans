@@ -19,10 +19,10 @@
 ```rust,ignore
 impl<T> RawVec<T> {
     fn new() -> Self {
-        // !0 is usize::MAX. This branch should be stripped at compile time.
+        // !0 is usize::MAX. 这一段分支代码在编译期间就可以计算出大小
         let cap = if mem::size_of::<T>() == 0 { !0 } else { 0 };
 
-        // `NonNull::dangling()` doubles as "unallocated" and "zero-sized allocation"
+        // `NonNull::dangling()` 有着`未分配内存(unallocated)`和`零尺寸(zero-sized allocation)`的双重含义
         RawVec {
             ptr: NonNull::dangling(),
             cap: cap,
@@ -31,24 +31,24 @@ impl<T> RawVec<T> {
     }
 
     fn grow(&mut self) {
-        // since we set the capacity to usize::MAX when T has size 0,
-        // getting to here necessarily means the Vec is overfull.
+        // 因为当 T 的尺寸为0时我们设置了 cap 为 usize::MAX
+        // 这一步成立意味着 Vec 溢出了
         assert!(mem::size_of::<T>() != 0, "capacity overflow");
 
         let (new_cap, new_layout) = if self.cap == 0 {
             (1, Layout::array::<T>(1).unwrap())
         } else {
-            // This can't overflow because we ensure self.cap <= isize::MAX.
+            // 保证新申请的内存没有超出`isize::MAX`字节
             let new_cap = 2 * self.cap;
 
-            // `Layout::array` checks that the number of bytes is <= usize::MAX,
-            // but this is redundant since old_layout.size() <= isize::MAX,
-            // so the `unwrap` should never fail.
+            // `Layout::array` 会检查申请的空间是否满足 <= usize::MAX,
+            // 但是因为 old_layout.size() <= isize::MAX,
+            // 所以这里的 unwrap 永远不可能失败
             let new_layout = Layout::array::<T>(new_cap).unwrap();
             (new_cap, new_layout)
         };
 
-        // Ensure that the new allocation doesn't exceed `isize::MAX` bytes.
+        // 保证新申请的内存没有超出`isize::MAX`字节
         assert!(new_layout.size() <= isize::MAX as usize, "Allocation too large");
 
         let new_ptr = if self.cap == 0 {
@@ -59,7 +59,7 @@ impl<T> RawVec<T> {
             unsafe { alloc::realloc(old_ptr, old_layout, new_layout.size()) }
         };
 
-        // If allocation fails, `new_ptr` will be null, in which case we abort.
+        // 如果分配失败，`new_ptr` 就会成为空指针，我们需要对应abort的操作
         self.ptr = match NonNull::new(new_ptr as *mut T) {
             Some(p) => p,
             None => alloc::handle_alloc_error(new_layout),

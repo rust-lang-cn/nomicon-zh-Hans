@@ -74,8 +74,8 @@ fn main() {
         days: Box::new(1),
     };
     world.inspector = Some(Inspector(&world.days));
-    // Let's say `days` happens to get dropped first.
-    // Then when Inspector is dropped, it will try to read free'd memory!
+    // 如果说 `days` 碰巧在这里被析构了，然后 Inspector 才被析构
+    // 这就会造成 `read-after-free` 的问题！
 }
 ```
 
@@ -127,13 +127,12 @@ fn main() {
         days: Box::new(1),
     };
     world.inspector = Some(Inspector(&world.days, "gadget"));
-    // Let's say `days` happens to get dropped first.
-    // Even when Inspector is dropped, its destructor will not access the
-    // borrowed `days`.
+    // 假设 `days` 在这里析构了
+    // 并且假设析构函数可以确保：该函数确保不会访问对 `days` 的引用
 }
 ```
 
-同样地，这个变体也不会访问借来的数据：
+同样地，下面这个变体也不会访问借来的数据：
 
 ```rust,compile_fail
 struct Inspector<T>(T, &'static str);
@@ -155,9 +154,8 @@ fn main() {
         days: Box::new(1),
     };
     world.inspector = Some(Inspector(&world.days, "gadget"));
-    // Let's say `days` happens to get dropped first.
-    // Even when Inspector is dropped, its destructor will not access the
-    // borrowed `days`.
+    // 让我们假设 `days` 在这里析构了
+    // 并且假设析构函数可以确保：该函数确保不会访问对 `days` 的引用
 }
 ```
 
@@ -235,7 +233,7 @@ struct Inspector<T>(T, &'static str, Box<for <'r> fn(&'r T) -> String>);
 
 impl<T> Drop for Inspector<T> {
     fn drop(&mut self) {
-        // The `self.2` call could access a borrow e.g. if `T` is `&'a _`.
+        // 如果 `T` 是 `&'a _` 这种类型，那么 self.2 有可能访问了被引用的变量
         println!("Inspector({}, {}) unwittingly inspects expired data.",
                  (self.2)(&self.0), self.1);
     }
@@ -251,8 +249,8 @@ struct Inspector<T: fmt::Display>(T, &'static str);
 
 impl<T: fmt::Display> Drop for Inspector<T> {
     fn drop(&mut self) {
-        // There is a hidden call to `<T as Display>::fmt` below, which
-        // could access a borrow e.g. if `T` is `&'a _`
+        // 这里可能隐藏了一个对于 `<T as Display>::fmt` 的调用, 
+        // 如果 `T` 是 `&'a _` 这种类型， 就可能访问了借用的变量. 
         println!("Inspector({}, {}) unwittingly inspects expired data.",
                  self.0, self.1);
     }
