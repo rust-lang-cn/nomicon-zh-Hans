@@ -1,6 +1,6 @@
 [book]
 author = ["The Rust Project Developers", "Pure White."]
-title = "Rust 死灵书"
+title = "Rust 秘典（死灵书）"
 description = "Unsafe Rust 的黑魔法指南"
 language = "zh-hans"
 
