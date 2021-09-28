@@ -29,17 +29,17 @@ impl<T> RawVec<T> {
         let (new_cap, new_layout) = if self.cap == 0 {
             (1, Layout::array::<T>(1).unwrap())
         } else {
-            // 保证新申请的内存没有超出`isize::MAX`字节
+            // 保证新申请的内存没有超出 `isize::MAX` 字节
             let new_cap = 2 * self.cap;
 
-            // `Layout::array` 会检查申请的空间是否满足 <= usize::MAX,
+            // `Layout::array` 会检查申请的空间是否小于等于 usize::MAX,
             // 但是因为 old_layout.size() <= isize::MAX,
             // 所以这里的 unwrap 永远不可能失败
             let new_layout = Layout::array::<T>(new_cap).unwrap();
             (new_cap, new_layout)
         };
 
-        // 保证新申请的内存没有超出`isize::MAX`字节
+        // 保证新申请的内存没有超出 `isize::MAX` 字节
         assert!(new_layout.size() <= isize::MAX as usize, "Allocation too large");
 
         let new_ptr = if self.cap == 0 {
@@ -50,7 +50,7 @@ impl<T> RawVec<T> {
             unsafe { alloc::realloc(old_ptr, old_layout, new_layout.size()) }
         };
 
-        // 如果分配失败，`new_ptr` 就会成为空指针，我们需要对应abort的操作
+        // 如果分配失败，`new_ptr` 就会成为空指针，我们需要对应 abort 的操作
         self.ptr = match NonNull::new(new_ptr as *mut T) {
             Some(p) => p,
             None => alloc::handle_alloc_error(new_layout),
@@ -120,11 +120,11 @@ pub struct IntoIter<T> {
     end: *const T,
 }
 
-// next 和 next_back 保持不变，因为它们并没有用到buf
+// next 和 next_back 保持不变，因为它们并没有用到 buf
 
 impl<T> Drop for IntoIter<T> {
     fn drop(&mut self) {
-        // 我们只需要确保Vec中所有元素都被读取了
+        // 我们只需要确保 Vec 中所有元素都被读取了
         // 在这之后这些元素会被自动清理
         for _ in &mut *self {}
     }

@@ -40,12 +40,12 @@ pub struct IntoIter<T> {
 ```rust,ignore
 impl<T> Vec<T> {
     pub fn into_iter(self) -> IntoIter<T> {
-        // 因为Vec实现了Drop，所以我们不能销毁它
+        // 因为 Vec 实现了 Drop，所以我们不能销毁它
         let ptr = self.ptr;
         let cap = self.cap;
         let len = self.len;
 
-        // 确保Vec不会被drop，因为那样会释放内存
+        // 确保 Vec 不会被 drop，因为那样会释放内存
         mem::forget(self);
 
         unsafe {

@@ -18,7 +18,7 @@ impl<T> Arc<T> {
             data,
         });
         Arc {
-            // 我们从 Box::into_raw 得到该指针，因此使用 `.unwrap()` 是完全OK的 
+            // 我们从 Box::into_raw 得到该指针，因此使用 `.unwrap()` 是完全可行的 
             ptr: NonNull::new(Box::into_raw(boxed)).unwrap(),
             phantom: PhantomData,
         }
@@ -102,7 +102,7 @@ impl<T> Arc<T> {
             data,
         });
         Arc {
-            // 我们从 Box::into_raw 得到该指针，因此使用 `.unwrap()` 是完全OK的 
+            // 我们从 Box::into_raw 得到该指针，因此使用 `.unwrap()` 是完全可行的 
             ptr: NonNull::new(Box::into_raw(boxed)).unwrap(),
             phantom: PhantomData,
         }

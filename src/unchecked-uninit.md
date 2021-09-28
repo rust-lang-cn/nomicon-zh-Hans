@@ -10,7 +10,7 @@
 use std::mem::{self, MaybeUninit};
 
 // 数组的大小是硬编码的，可以很方便地修改(改变几个硬编码的常数非常容易)
-// 这表示我们不能用[a, b, c]这种方式初始化数组，因为我们必须要和硬编码中的 `SIZE` 保持同步
+// 这表示我们不能用 [a, b, c] 这种方式初始化数组，因为我们必须要和硬编码中的 `SIZE` 保持同步
 const SIZE: usize = 10;
 
 let x = {
@@ -22,8 +22,8 @@ let x = {
     };
 
     // drop 一个 MaybeUninit 什么都不做
-    // 因此使用直接的裸指针赋值(而非 ptr::write)不会导致原先未初始化的变量被drop
-    // 不需要在这里考虑异常安全，因为Box永远不会panic
+    // 因此使用直接的裸指针赋值(而非 ptr::write)不会导致原先未初始化的变量被 drop
+    // 不需要在这里考虑异常安全，因为 Box 永远不会 panic
     for i in 0..SIZE {
         x[i] = MaybeUninit::new(Box::new(i as u32));
     }
@@ -51,7 +51,7 @@ dbg!(x);
 
 <!-- ignore: simplified code -->
 ```rust,ignore
-*x[i].as_mut_ptr() = Box::new(i as u32); // WRONG!
+*x[i].as_mut_ptr() = Box::new(i as u32); // 错误!
 ```
 
 我们实际上会覆盖一个`Box<u32>`，导致在未初始化数据上调用`drop`，这将给你带来很多乐子。

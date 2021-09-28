@@ -31,10 +31,10 @@ struct A {
 ```rust
 struct A {
     a: u8,
-    _pad1: [u8; 3], // to align `b`
+    _pad1: [u8; 3], // 需要和 `b` 内存对齐
     b: u32,
     c: u16,
-    _pad2: [u8; 2], // to make overall size multiple of 4
+    _pad2: [u8; 2], // 让总体的大小是 4 的倍数
 }
 ```
 
@@ -112,7 +112,7 @@ enum Foo {
 
 ```rust
 struct FooRepr {
-    data: u64, // 根据tag的不同，这一项可以为u64，u32，或者u8
+    data: u64, // 根据 tag 的不同，这一项可以为 u64，u32，或者 u8
     tag: u8,   // 0 = A, 1 = B, 2 = C
 }
 ```

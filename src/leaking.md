@@ -35,18 +35,18 @@
 let mut vec = vec![Box::new(0); 4];
 
 {
-    // 开始drain，vec无法被再次访问
+    // 开始 drain，vec 无法被再次访问
     let mut drainer = vec.drain(..);
 
-    // 从drain中取出两个元素，然后立刻销毁它们
+    // 从 drain 中取出两个元素，然后立刻销毁它们
     drainer.next();
     drainer.next();
 
-    // 销毁drainer，但是不调用它的drop函数
+    // 销毁 drainer，但是不调用它的 drop 函数
     mem::forget(drainer);
 }
 
-// Oops，vec[0] 已经被drop了，我们正在读一块已经释放的内存
+// Oops，vec[0] 已经被 drop 了，我们正在读一块已经释放的内存
 println!("{}", vec[0]);
 ```
 
@@ -138,19 +138,19 @@ let mut data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 {
     let guards = vec![];
     for x in &mut data {
-        // 将可变引用移入闭包，并且在另外一个线程执行闭包
-        // 闭包有一个生命周期，由其保存的引用的生命周期决定
-        // 返回的句柄和闭包也有相同的生命周期
-        // 所以它也和闭包一样可变引用了x
-        // 也就意味着在句柄(线程)销毁之前，我们不能访问x
+        // 将可变引用移入闭包，并且在另外一个线程执行闭包，
+        // 闭包有一个生命周期，由其保存的引用的生命周期决定，
+        // 返回的句柄和闭包也有相同的生命周期，
+        // 所以它也和闭包一样可变引用了 x，
+        // 也就意味着在句柄(线程)销毁之前，我们不能访问 x
         let guard = thread::scoped(move || {
             *x *= 2;
         });
         // 将线程句柄保存起来，之后使用
         guards.push(guard);
     }
-    // 所有的句柄在这里被drop, 强制线程Join(主线程在此阻塞)
-    // 等到所有的线程join之后，其借用的数据就过期了
+    // 所有的句柄在这里被 drop, 强制线程 Join(主线程在此阻塞)，
+    // 等到所有的线程 join 之后，其借用的数据就过期了，
     // 因此又可以在主线程中访问了
 }
 // 数据在这里已经完全改变了
@@ -166,7 +166,7 @@ let mut data = Box::new(0);
         // 好一点的情况是存在数据竞争，更坏的情况是 use-after-free
         *data += 1;
     });
-    //  因为guard被主动forget了，不会调用drop方法，主线程不会阻塞等待guard结束
+    //  因为 guard 被主动 forget 了，不会调用 drop 方法，主线程不会阻塞等待 guard 结束
     mem::forget(guard);
 }
 // Box在这里被销毁，而子线程不确定是否会在这里尝试访问它

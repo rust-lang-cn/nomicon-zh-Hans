@@ -154,7 +154,7 @@ impl<T: Ord> BinaryHeap<T> {
                 if hole.removed() <= hole.get(parent) { break }
                 hole.move_to(parent);
             }
-            // 无论有没有panic，hole在这里都会被无条件填充
+            // 无论有没有 panic，这里 hole 都会被无条件填充
         }
     }
 }

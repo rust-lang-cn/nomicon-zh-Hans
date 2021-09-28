@@ -39,14 +39,14 @@ fn index(idx: usize, arr: &[u8]) -> Option<u8> {
 ```rust
 use std::ptr;
 
-// 注意：这个定义十分简单。参考实现Vec的章节
+// 注意：这个定义十分简单。参考实现 Vec 的章节
 pub struct Vec<T> {
     ptr: *mut T,
     len: usize,
     cap: usize,
 }
 
-// 注意：这个实现未考虑大小为 `0` 的类型。参考实现Vec的章节
+// 注意：这个实现未考虑大小为 `0` 的类型。参考实现 Vec 的章节
 impl<T> Vec<T> {
     pub fn push(&mut self, elem: T) {
         if self.len == self.cap {
@@ -69,7 +69,7 @@ impl<T> Vec<T> {
 <!-- ignore: simplified code -->
 ```rust,ignore
 fn make_room(&mut self) {
-    // grow the capacity
+    // 增加容量
     self.cap += 1;
 }
 ```

@@ -30,9 +30,9 @@ fn compute(input: &u32, output: &mut u32) {
 
 ```rust
 fn compute(input: &u32, output: &mut u32) {
-    let cached_input = *input; // keep `*input` in a register
+    let cached_input = *input; // 将 `*input` 中的内容保存在寄存器中 
     if cached_input > 10 {
-        // 如果输入比10大, 优化之前的代码会将output设置为1，然后乘以2
+        // 如果输入比 10 大, 优化之前的代码会将 output 设置为 1，然后乘以 2
         // 结果一定返回 `2` (因为 `>10` 包括了 `>5` 的情况)
         // 因此在这里，我们可以进行优化
         // 避免对于 output 赋值两次，直接将 output 设置为最后的结果 `2`

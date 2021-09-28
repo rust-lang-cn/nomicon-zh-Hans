@@ -39,7 +39,7 @@ fn love(pet: Animal) {
 <!-- ignore: simplified code -->
 ```rust,ignore
 let mr_snuggles: Cat = ...;
-love(mr_snuggles);         // ERROR: 期待是一个Animal，实际上却是Cat
+love(mr_snuggles);         // ERROR: 期待是一个 Animal，实际上却是 Cat
 ```
 
 Snuggles 先生是一只猫，而猫并不能够*精确地*认为和动物相等，所以我们不能爱他！。😿
@@ -63,7 +63,7 @@ Snuggles 先生是一只猫，而猫并不能够*精确地*认为和动物相等
 fn evil_feeder(pet: &mut Animal) {
     let spike: Dog = ...;
 
-    // `pet` 是一个Animal，而Dog是Animal的子类型
+    // `pet` 是一个 Animal，而 Dog 是 Animal 的子类型
     // 所以这里应该是正确的，对吗...?
     *pet = spike;
 }
@@ -145,7 +145,7 @@ Variance 是事情变得有点复杂的地方。
 fn evil_feeder(pet: &mut Animal) {
     let spike: Dog = ...;
 
-    // `pet` 是一个Animal，而Dog是Animal的子类型
+    // `pet` 是一个 Animal，而 Dog 是 Animal 的子类型
     // 所以这里应该是正确的，对吗...?
     *pet = spike;
 }
@@ -188,10 +188,10 @@ fn main() {
     let mut mr_snuggles: &'static str = "meow! :3";  // mr. snuggles forever!!
     {
         let spike = String::from("bark! >:V");
-        let spike_str: &str = &spike;                // 仅仅在这个block存在
+        let spike_str: &str = &spike;                // 仅仅在这个代码块存在
         evil_feeder(&mut mr_snuggles, spike_str);    // 恶魔降临!
     }
-    println!("{}", mr_snuggles);                     // use-after-free问题?
+    println!("{}", mr_snuggles);                     // use-after-free 问题?
 }
 ```
 
@@ -204,9 +204,9 @@ error[E0597]: `spike` does not live long enough
 6  |     let mut mr_snuggles: &'static str = "meow! :3";  // mr. snuggles forever!!
    |                          ------------ type annotation requires that `spike` is borrowed for `'static`
 ...
-9  |         let spike_str: &str = &spike;                // Only lives for the block
+9  |         let spike_str: &str = &spike;                // 仅在这个代码块存活
    |                               ^^^^^^ borrowed value does not live long enough
-10 |         evil_feeder(&mut mr_snuggles, spike_str);    // EVIL!
+10 |         evil_feeder(&mut mr_snuggles, spike_str);    // 恶魔降临!
 11 |     }
    |     - `spike` dropped here while still borrowed
 ```

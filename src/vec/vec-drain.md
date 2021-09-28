@@ -129,7 +129,7 @@ impl<T> Vec<T> {
             let iter = RawValIter::new(&self);
 
             // 这里事关 mem::forget 的安全
-            // 如果 Drain 被 forget , 我们就会泄露整个Vec的内存
+            // 如果 Drain 被 forget , 我们就会泄露整个 Vec 的内存
             // 既然我们始终要做这一步，为何不在这里完成呢?
             self.len = 0;
 
