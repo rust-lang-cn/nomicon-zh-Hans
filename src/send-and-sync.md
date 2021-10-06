@@ -66,7 +66,7 @@ struct Carton<T>(ptr::NonNull<T>);
 
 impl<T> Carton<T> {
     pub fn new(value: T) -> Self {
-        // 在堆上分配足够的可以存储一个T类型的空间
+        // 在堆上分配足够的可以存储一个类型 T 大小的空间
         assert_ne!(size_of::<T>(), 0, "Zero-sized types are out of the scope of this example");
         let mut memptr = ptr::null_mut() as *mut T;
         unsafe {
@@ -78,17 +78,16 @@ impl<T> Carton<T> {
             assert_eq!(ret, 0, "Failed to allocate or invalid alignment");
         };
 
-        // NonNull仅仅是对于指针的一层封装，强制要求指针是非空的
+        // NonNull 仅仅是对于指针的一层封装，强制要求指针是非空的
         let mut ptr = unsafe {
-            // Safety: memptr 是可以解引用的，因为我们创建了它，并且有`写所有权`
+            // 安全保证：因为我们创建了 memptr，并且独占了所有权，所以可以解引用
             ptr::NonNull::new(memptr.cast::<T>())
                 .expect("Guaranteed non-null if posix_memalign returns 0")
         };
 
         // 将数据从栈上复制到堆上
         unsafe {
-            // Safety: 如果ptr是非空的，
-            // posix_memalign会返回一个已经内存对齐的有效的可写指针
+            // 安全保证：如果 ptr 是非空的，posix_memalign 会返回一个已经内存对齐的有效的可写指针
             ptr.as_ptr().write(value);
         }
 
@@ -109,9 +108,9 @@ impl<T> Deref for Carton<T> {
 
     fn deref(&self) -> &Self::Target {
         unsafe {
-            // Safety: self 指针已经内存对齐，并且初始化了, 在 `Self::new` 方法中已经解引用，
+            // 安全保证：self 指针已经内存对齐，并且初始化了, 在 `Self::new` 方法中已经解引用，
             // 我们要求 writers 引用 Carton，而这里返回值的生命周期和输入的 self 的生命周期对齐，
-            // 因此 borrow checker 会强制保证这一点:
+            // 因此 borrow checker 会强制保证这一点：
             // 直到这个引用被 drop，不能修改Carton中的内容
             self.0.as_ref()
         }
@@ -121,7 +120,7 @@ impl<T> Deref for Carton<T> {
 impl<T> DerefMut for Carton<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe {
-            // Safety: self 指针已经内存对齐，并且初始化了, 在 `Self::new` 方法中已经解引用，
+            // 安全保证：self 指针已经内存对齐，并且初始化了, 在 `Self::new` 方法中已经解引用，
             // 我们要求 writers 可写引用 Carton，而这里返回值的生命周期和输入的 self 的生命周期对齐，
             // 因此 borrow checker 会强制保证这一点:
             // 直到这个引用被 drop，不能访问 Carton 中的内容
@@ -135,7 +134,7 @@ impl<T> DerefMut for Carton<T> {
 
 ```rust
 # struct Carton<T>(std::ptr::NonNull<T>);
-// Safety: 除了我们没有人拥有Carton中的裸指针，因此，只需要T可以Send，Carton就可以Send
+// 安全保证：除了我们没有人拥有Carton中的裸指针，因此，只需要T可以Send，Carton就可以Send
 unsafe impl<T> Send for Carton<T> where T: Send {}
 ```
 
@@ -143,12 +142,12 @@ unsafe impl<T> Send for Carton<T> where T: Send {}
 
 ```rust
 # struct Carton<T>(std::ptr::NonNull<T>);
-// Safety: 存在将 `&Carton<T>` 转变为 `&T` 的公开API
-// 而这些API是 unsynchronized 的(比如 `Deref`)
-// 因此只有在T是 `Sync` 的情况下，`Carton<T>` 才可以是 `Sync` 的
-// 反过来说, `Carton` 本身没有使用到任何 `内部可变性`,
-// 所有可变引用都只能通过独占的方式获取 (`&mut`)
-// 这也就意味着 `T` 的 `Sync` 特性可以*传递*给 `Carton<T>`
+// 安全保证：存在将 `&Carton<T>` 转变为 `&T` 的公开 API，
+// 而这些 API 是 unsynchronized 的（比如 `Deref`），
+// 因此只有在T是 `Sync` 的情况下，`Carton<T>` 才可以是 `Sync` 的，
+// 反过来说，`Carton` 本身没有使用到任何 `内部可变性`，
+// 所有可变引用都只能通过独占的方式获取 (`&mut`)，
+// 这也就意味着 `T` 的 `Sync` 特性可以传递给 `Carton<T>`
 unsafe impl<T> Sync for Carton<T> where T: Sync  {}
 ```
 

@@ -9,26 +9,25 @@
 ```rust
 use std::mem::{self, MaybeUninit};
 
-// 数组的大小是硬编码的，可以很方便地修改(改变几个硬编码的常数非常容易)
-// 这表示我们不能用 [a, b, c] 这种方式初始化数组，因为我们必须要和硬编码中的 `SIZE` 保持同步
-const SIZE: usize = 10;
+// 数组的大小是硬编码的，可以很方便地修改（改变几个硬编码的常数非常容易）
+// 这表示我们不能用 [a, b, c] 这种方式初始化数组，因为我们必须要和硬编码中的 `SIZE` 保持同步！
+const SIZE: usize = 10
 
 let x = {
-    // 创建一个未初始化，类型为 `MaybeUninit` 的数组
-    // 因为我们这里声明的已初始化类型是一堆 `MaybeUninit`，不要求已初始化
-    // 因此 `assume_init` 的操作是安全的
+    // 创建一个未初始化，类型为 `MaybeUninit` 的数组，
+    // 因为这里声明的是一堆 `MaybeUninit`，不要求初始化，所以 `assume_init` 操作是安全的
     let mut x: [MaybeUninit<Box<u32>>; SIZE] = unsafe {
         MaybeUninit::uninit().assume_init()
     };
 
-    // drop 一个 MaybeUninit 什么都不做
-    // 因此使用直接的裸指针赋值(而非 ptr::write)不会导致原先未初始化的变量被 drop
+    // 因为 drop 一个 `MaybeUninit` 什么都不做，
+    // 所以使用直接的裸指针赋值（而非 ptr::write）不会导致原先未初始化的变量被 drop
     // 不需要在这里考虑异常安全，因为 Box 永远不会 panic
     for i in 0..SIZE {
         x[i] = MaybeUninit::new(Box::new(i as u32));
     }
 
-    // 一切都初始化完毕，将未初始化的类型转换为初始化的类型
+    // 一切都初始化完毕，将未初始化的类型强制转换为初始化的类型
     unsafe { mem::transmute::<_, [Box<u32>; SIZE]>(x) }
 };
 
@@ -51,7 +50,7 @@ dbg!(x);
 
 <!-- ignore: simplified code -->
 ```rust,ignore
-*x[i].as_mut_ptr() = Box::new(i as u32); // 错误!
+*x[i].as_mut_ptr() = Box::new(i as u32); // 错误！
 ```
 
 我们实际上会覆盖一个`Box<u32>`，导致在未初始化数据上调用`drop`，这将给你带来很多乐子。

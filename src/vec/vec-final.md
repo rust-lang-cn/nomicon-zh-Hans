@@ -18,11 +18,11 @@ unsafe impl<T: Sync> Sync for RawVec<T> {}
 
 impl<T> RawVec<T> {
     fn new() -> Self {
-        // !0 等价于 usize::MAX. 这一段分支代码在编译期间就可以计算出结果返回的结果，返回给 cap
+        // !0 等价于 usize::MAX， 这一段分支代码在编译期间就可以计算出结果返回的结果，返回给 cap
         let cap = if mem::size_of::<T>() == 0 { !0 } else { 0 };
 
         // `NonNull::dangling()` 有双重含义:
-        // `未分配内存(unallocated)`, `零尺寸(zero-sized allocation)`
+        // `未分配内存 (unallocated)`, `零尺寸 (zero-sized allocation)`
         RawVec {
             ptr: NonNull::dangling(),
             cap: cap,
@@ -31,7 +31,7 @@ impl<T> RawVec<T> {
     }
 
     fn grow(&mut self) {
-        // 因为当 T 的尺寸为0时，我们设置了 cap 为 usize::MAX
+        // 因为当 T 的尺寸为 0 时，我们设置了 cap 为 usize::MAX，
         // 这一步成立便意味着 Vec 溢出了.
         assert!(mem::size_of::<T>() != 0, "capacity overflow");
 
@@ -41,8 +41,8 @@ impl<T> RawVec<T> {
             // 保证新申请的内存没有超出 `isize::MAX` 字节
             let new_cap = 2 * self.cap;
 
-            // `Layout::array` 会检查申请的空间是否小于等于 usize::MAX,
-            // 但是因为 old_layout.size() <= isize::MAX,
+            // `Layout::array` 会检查申请的空间是否小于等于 usize::MAX，
+            // 但是因为 old_layout.size() <= isize::MAX，
             // 所以这里的 unwrap 永远不可能失败
             let new_layout = Layout::array::<T>(new_cap).unwrap();
             (new_cap, new_layout)
@@ -62,7 +62,7 @@ impl<T> RawVec<T> {
             unsafe { alloc::realloc(old_ptr, old_layout, new_layout.size()) }
         };
 
-        // 如果分配失败，`new_ptr` 就会成为空指针，我们需要对应 abort 的操作
+        // 如果分配失败，`new_ptr` 就会成为空指针，我们需要处理该意外情况
         self.ptr = match NonNull::new(new_ptr as *mut T) {
             Some(p) => p,
             None => alloc::handle_alloc_error(new_layout),
@@ -176,9 +176,9 @@ impl<T> Vec<T> {
         unsafe {
             let iter = RawValIter::new(&self);
 
-            // 这里事关 mem::forget 的安全
-            // 如果 Drain 被 forget , 我们就会泄露整个 Vec 的内存
-            // 既然我们始终要做这一步，为何不在这里完成呢?
+            // 这里事关 mem::forget 的安全。
+            // 如果 Drain 被 forget，我们就会泄露整个 Vec 的内存
+            // 既然我们始终要做这一步，为何不在这里完成呢？
             self.len = 0;
 
             Drain {

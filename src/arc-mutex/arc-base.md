@@ -9,16 +9,17 @@
 这很简单，因为我们只需要把`ArcInner<T>`扔到一个 Box 里并得到一个`NonNull<T>`的指针。
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 impl<T> Arc<T> {
     pub fn new(data: T) -> Arc<T> {
-        // 当前的指针就是第一个引用，因此初始时设置 count=1
+        // 当前的指针就是第一个引用，因此初始时设置 count 为 1
         let boxed = Box::new(ArcInner {
             rc: AtomicUsize::new(1),
             data,
         });
         Arc {
-            // 我们从 Box::into_raw 得到该指针，因此使用 `.unwrap()` 是完全可行的 
+            // 我们从 Box::into_raw 得到该指针，因此使用 `.unwrap()` 是完全可行的
             ptr: NonNull::new(Box::into_raw(boxed)).unwrap(),
             phantom: PhantomData,
         }
@@ -31,10 +32,12 @@ impl<T> Arc<T> {
 由于我们正在构建并发原语，因此我们需要能够跨线程发送它。因此，我们可以实现`Send`和`Sync`标记特性。有关这些的更多信息，请参阅[有关`Send`和`Sync`的部分](../send-and-sync.md)。
 
 这是没问题的，因为：
-* 当且仅当你拥有唯一的 Arc 引用时，你才能获得其引用数据的可变引用（这仅发生在`Drop`中）
-* 我们使用原子操作进行共享可变引用计数
+
+- 当且仅当你拥有唯一的 Arc 引用时，你才能获得其引用数据的可变引用（这仅发生在`Drop`中）
+- 我们使用原子操作进行共享可变引用计数
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 unsafe impl<T: Sync + Send> Send for Arc<T> {}
 unsafe impl<T: Sync + Send> Sync for Arc<T> {}
@@ -49,6 +52,7 @@ unsafe impl<T: Sync + Send> Sync for Arc<T> {}
 为了将`NonNull<T>`指针解引用为`T`，我们可以调用`NonNull::as_ref`。这是不安全的，与普通的`as_ref`函数不同，所以我们必须这样调用它。
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 unsafe { self.ptr.as_ref() }
 ```
@@ -66,6 +70,7 @@ unsafe { self.ptr.as_ref() }
 我们需要导入该 Trait：
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 use std::ops::Deref;
 ```
@@ -73,6 +78,7 @@ use std::ops::Deref;
 这里是实现：
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 impl<T> Deref for Arc<T> {
     type Target = T;
@@ -91,18 +97,19 @@ impl<T> Deref for Arc<T> {
 下面是本节的所有代码。
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 use std::ops::Deref;
 
 impl<T> Arc<T> {
     pub fn new(data: T) -> Arc<T> {
-        // 当前的指针就是第一个引用，因此初始时设置 count=1
+        // 当前的指针就是第一个引用，因此初始时设置 count 为 1
         let boxed = Box::new(ArcInner {
             rc: AtomicUsize::new(1),
             data,
         });
         Arc {
-            // 我们从 Box::into_raw 得到该指针，因此使用 `.unwrap()` 是完全可行的 
+            // 我们从 Box::into_raw 得到该指针，因此使用 `.unwrap()` 是完全可行的
             ptr: NonNull::new(Box::into_raw(boxed)).unwrap(),
             phantom: PhantomData,
         }

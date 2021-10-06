@@ -8,13 +8,12 @@
 
 ```rust,compile_fail
 fn as_str(data: &u32) -> &str {
-    // compute the string
+    // 计算出字符串
     let s = format!("{}", data);
 
-    // OH NO! We returned a reference to something that
-    // exists only in this function!
-    // Dangling pointer! Use after free! Alas!
-    // (this does not compile in Rust)
+    // 不好！我们返回了一个仅仅在函数中存在的变量的引用!
+    // 悬挂指针！释放后使用！别名！
+    // (这在 Rust 中不会编译通过)
     &s
 }
 ```
@@ -27,12 +26,12 @@ fn as_str(data: &u32) -> &str {
 
 ```rust,compile_fail
 let mut data = vec![1, 2, 3];
-// get an internal reference
+// 获取内部元素的引用
 let x = &data[0];
 
-// OH NO! `push` causes the backing storage of `data` to be reallocated.
-// Dangling pointer! Use after free! Alas!
-// (this does not compile in Rust)
+// 不好！ `push` 操作导致 `data` 的存储空间重新分配了
+// 悬挂指针！释放后使用！别名！
+// (这在 Rust 中不会编译通过)
 data.push(4);
 
 println!("{}", x);

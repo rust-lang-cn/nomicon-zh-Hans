@@ -286,7 +286,7 @@ extern {
 }
 
 fn main() {
-    //创建一个会被在回调函数中引用的 RustObject
+    // 创建一个会被在回调函数中引用的 RustObject
     let mut rust_object = Box::new(RustObject { a: 5 });
 
     unsafe {
@@ -310,7 +310,7 @@ int32_t register_callback(void* callback_target, rust_callback callback) {
 }
 
 void trigger_callback() {
-  cb(cb_target, 7); // 这会调用 Rust 代码中的 callback(&rustObject, 7)
+  cb(cb_target, 7); // 这会调用 Rust 代码中的 callback (&rustObject, 7)
 }
 ```
 
@@ -492,10 +492,10 @@ extern "C" {
 #                                            c_int) -> c_int>)
 # {}
 
-// 这个函数其实没什么实际的用处。
+// 这个函数其实没什么实际的用处，
 // 它从C代码接受一个函数指针和一个整数，
-// 用整数做参数，调用指针指向的函数，并返回函数的返回值。
-// 如果没有指定函数，那默认就返回整数的平方。
+// 用整数做参数，调用指针指向的函数，并返回函数的返回值，
+// 如果没有指定函数，那默认就返回整数的平方
 extern "C" fn apply(process: Option<extern "C" fn(c_int) -> c_int>, int: c_int) -> c_int {
     match process {
         Some(f) => f(int),
@@ -582,7 +582,7 @@ extern "C" {
 这是一种完全有效的处理方式。然而，我们可以做得更好一点。为了解决这个问题，一些 C 库会创建一个`struct`，其中结构的细节和内存布局是私有的，这提供了某种程度的类型安全。这些结构被称为“不透明的”。下面是一个例子，在 C 语言中：
 
 ```c
-struct Foo; /* Foo是一个接口，但它的内容不属于公共接口 */
+struct Foo; /* Foo 是一个接口，但它的内容不属于公共接口 */
 struct Bar;
 void foo(struct Foo *arg);
 void bar(struct Bar *arg);

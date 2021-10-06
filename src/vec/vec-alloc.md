@@ -91,14 +91,14 @@ impl<T> Vec<T> {
             // 因为 self.cap <= isize::MAX，所以不会溢出
             let new_cap = 2 * self.cap;
 
-            // `Layout::array` 会检查申请的空间是否小于等于 usize::MAX,
-            // 但是因为 old_layout.size() <= isize::MAX,
+            // `Layout::array` 会检查申请的空间是否小于等于 usize::MAX，
+            // 但是因为 old_layout.size() <= isize::MAX，
             // 所以这里的 unwrap 永远不可能失败
             let new_layout = Layout::array::<T>(new_cap).unwrap();
             (new_cap, new_layout)
         };
 
-        // 保证新申请的内存没有超出 `isize::MAX` 字节的大小.
+        // 保证新申请的内存没有超出 `isize::MAX` 字节的大小
         assert!(new_layout.size() <= isize::MAX as usize, "Allocation too large");
 
         let new_ptr = if self.cap == 0 {

@@ -21,7 +21,7 @@ impl<T: Clone> Vec<T> {
     fn push_all(&mut self, to_push: &[T]) {
         self.reserve(to_push.len());
         unsafe {
-            // 因为我们刚刚预留(reserve)了空间，所以这里不会溢出
+            // 因为我们刚刚预留了空间，所以这里不会溢出
             self.set_len(self.len() + to_push.len());
 
             for (i, x) in to_push.iter().enumerate() {
@@ -154,7 +154,7 @@ impl<T: Ord> BinaryHeap<T> {
                 if hole.removed() <= hole.get(parent) { break }
                 hole.move_to(parent);
             }
-            // 无论有没有 panic，这里 hole 都会被无条件填充
+            // 无论是否 panic，这里的 hole 都会被无条件填充
         }
     }
 }

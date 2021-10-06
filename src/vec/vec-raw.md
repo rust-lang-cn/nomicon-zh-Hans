@@ -32,8 +32,8 @@ impl<T> RawVec<T> {
             // 保证新申请的内存没有超出 `isize::MAX` 字节
             let new_cap = 2 * self.cap;
 
-            // `Layout::array` 会检查申请的空间是否小于等于 usize::MAX,
-            // 但是因为 old_layout.size() <= isize::MAX,
+            // `Layout::array` 会检查申请的空间是否小于等于 usize::MAX，
+            // 但是因为 old_layout.size() <= isize::MAX，
             // 所以这里的 unwrap 永远不可能失败
             let new_layout = Layout::array::<T>(new_cap).unwrap();
             (new_cap, new_layout)
@@ -124,7 +124,7 @@ pub struct IntoIter<T> {
 
 impl<T> Drop for IntoIter<T> {
     fn drop(&mut self) {
-        // 我们只需要确保 Vec 中所有元素都被读取了
+        // 我们只需要确保 Vec 中所有元素都被读取了，
         // 在这之后这些元素会被自动清理
         for _ in &mut *self {}
     }
@@ -133,8 +133,8 @@ impl<T> Drop for IntoIter<T> {
 impl<T> Vec<T> {
     pub fn into_iter(self) -> IntoIter<T> {
         unsafe {
-            // 需要使用 ptr::read 非安全地把 buf 移出，因为它没有实现 Copy
-            // 而且 Vec 实现了 Drop Trait (因此我们不能销毁它).
+            // 需要使用 ptr::read 非安全地把 buf 移出，因为它没有实现 Copy，
+            // 而且 Vec 实现了 Drop Trait (因此我们不能销毁它)
             let buf = ptr::read(&self.buf);
             let len = self.len;
             mem::forget(self);

@@ -9,13 +9,13 @@ insert 需要将目标索引的所有元素向右移动一个。要做到这一�
 <!-- ignore: simplified code -->
 ```rust,ignore
 pub fn insert(&mut self, index: usize, elem: T) {
-    // 注意：`<=` 是因为我们可以把值插入到任何索引范围([0,length-1])内的位置之后
+    // 注意：`<=` 是因为我们可以把值插入到任何索引范围 ([0,length-1]) 内的位置之后
     // 这种情况等同于 push
     assert!(index <= self.len, "index out of bounds");
     if self.cap == self.len { self.grow(); }
 
     unsafe {
-        // ptr::copy(src, dest, len) 的含义: "从 dst 复制连续的 len 个元素到 src "
+        // ptr::copy(src, dest, len) 的含义： "从 dst 复制连续的 len 个元素到 src "
         ptr::copy(self.ptr.as_ptr().add(index),
                   self.ptr.as_ptr().add(index + 1),
                   self.len - index);
@@ -30,7 +30,7 @@ remove 的行为方式正好相反。我们需要将所有的元素从`[i+1 ... 
 <!-- ignore: simplified code -->
 ```rust,ignore
 pub fn remove(&mut self, index: usize) -> T {
-    // 注意：`<` 是因为我们不能删除超出所有元素之范围的位置
+    // 注意：使用 `<` 是因为 index 不能删除超出元素下标的范围
     assert!(index < self.len, "index out of bounds");
     unsafe {
         self.len -= 1;

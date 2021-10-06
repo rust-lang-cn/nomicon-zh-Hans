@@ -7,8 +7,8 @@
 use std::marker::PhantomData;
 
 struct Drain<'a, T: 'a> {
-    // 这里需要限制生命周期, 因此我们使用了 `&'a mut Vec<T>`
-    // 也就是我们语义上包含的内容
+    // 这里需要限制生命周期, 因此我们使用了 `&'a mut Vec<T>`，
+    // 也就是我们语义上包含的内容，
     // 我们只会调用 `pop()` 和 `remove(0)` 两个方法
     vec: PhantomData<&'a mut Vec<T>>,
     start: *const T,
@@ -32,14 +32,14 @@ struct RawValIter<T> {
 }
 
 impl<T> RawValIter<T> {
-    // 构建RawValIter是不安全的，因为它没有关联的生命周期
-    // 将 RawValIter 存储在与它实际分配相同的结构体中是非常有必要的
-    // 但这里是具体的实现细节，不用对外公开，所以一切
+    // 构建 RawValIter 是不安全的，因为它没有关联的生命周期，
+    // 将 RawValIter 存储在与它实际分配相同的结构体中是非常有必要的，
+    // 但这里是具体的实现细节，不用对外公开
     unsafe fn new(slice: &[T]) -> Self {
         RawValIter {
             start: slice.as_ptr(),
             end: if slice.len() == 0 {
-                // 如果 `len = 0`, 说明没有分配内存，需要避免使用 offset
+                // 如果 `len = 0`, 说明没有分配内存，需要避免使用 offset，
                 // 因为那样会给 LLVM 的 GEP 传递错误的信息
                 slice.as_ptr()
             } else {
@@ -128,9 +128,9 @@ impl<T> Vec<T> {
         unsafe {
             let iter = RawValIter::new(&self);
 
-            // 这里事关 mem::forget 的安全
-            // 如果 Drain 被 forget , 我们就会泄露整个 Vec 的内存
-            // 既然我们始终要做这一步，为何不在这里完成呢?
+            // 这里事关 mem::forget 的安全。
+            // 如果 Drain 被 forget，我们就会泄露整个 Vec 的内存，
+            // 既然我们始终要做这一步，为何不在这里完成呢？
             self.len = 0;
 
             Drain {

@@ -70,10 +70,10 @@ impl<T> Drop for Arc<T> {
         if inner.rc.fetch_sub(1, Ordering::Release) != 1 {
             return;
         }
-        // 我们需要防止针对 inner 的使用和删除的重排序
+        // 我们需要防止针对 inner 的使用和删除的重排序，
         // 因此使用 fence 来进行保护是非常有必要的
         atomic::fence(Ordering::Acquire);
-        // Safety: 我们知道这是最后一个对 ArcInner 的引用，并且这个指针是有效的
+        // 安全保证：我们知道这是最后一个对 ArcInner 的引用，并且这个指针是有效的
         unsafe { Box::from_raw(self.ptr.as_ptr()); }
     }
 }

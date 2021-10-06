@@ -33,7 +33,7 @@ struct Iter<'a, T: 'a> {
 
 ```rust
 struct Vec<T> {
-    data: *const T, // *const 是可变异的！ 
+    data: *const T, // *const 是可变异的！
     len: usize,
     cap: usize,
 }
