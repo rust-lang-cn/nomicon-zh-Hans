@@ -51,11 +51,7 @@ Rust 在其他方面对其他可疑的操作是相当宽容的。Rust 认为以�
 然而任何真正可能做这种事情的程序都是_可能_不正确的，Rust 提供了很多工具来尽可能检查出这些问题，但要这些问题完全被预防是不现实的。
 
 [pointer aliasing rules]: references.html
-
 [uninitialized memory]: uninitialized.html
-
 [race]: races.html
-
 [target features]: https://doc.rust-lang.org/reference/attributes/codegen.html#the-target_feature-attribute
-
 [`nonnull`]: https://doc.rust-lang.org/std/ptr/struct.NonNull.html

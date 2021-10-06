@@ -52,7 +52,6 @@ unsafe impl<T: Sync + Send> Sync for Arc<T> {}
 为了将`NonNull<T>`指针解引用为`T`，我们可以调用`NonNull::as_ref`。这是不安全的，与普通的`as_ref`函数不同，所以我们必须这样调用它。
 
 <!-- ignore: simplified code -->
-
 ```rust,ignore
 unsafe { self.ptr.as_ref() }
 ```

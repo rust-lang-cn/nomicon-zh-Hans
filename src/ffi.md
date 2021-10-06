@@ -250,7 +250,7 @@ int32_t register_callback(rust_callback callback) {
 }
 
 void trigger_callback() {
-  cb(7); // Will call callback(7) in Rust.
+  cb(7); // 在 Rust 中会调用回调函数 callback(7)
 }
 ```
 
@@ -310,7 +310,7 @@ int32_t register_callback(void* callback_target, rust_callback callback) {
 }
 
 void trigger_callback() {
-  cb(cb_target, 7); // 这会调用 Rust 代码中的 callback (&rustObject, 7)
+  cb(cb_target, 7); // 这会调用 Rust 代码中的 callback(&rustObject, 7)
 }
 ```
 
@@ -485,7 +485,7 @@ use libc::c_int;
 
 # #[cfg(hidden)]
 extern "C" {
-    /// Registers the callback.
+    /// 注册回调函数
     fn register(cb: Option<extern "C" fn(Option<extern "C" fn(c_int) -> c_int>, c_int) -> c_int>);
 }
 # unsafe fn register(_: Option<extern "C" fn(Option<extern "C" fn(c_int) -> c_int>,
