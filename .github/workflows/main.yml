@@ -28,8 +28,3 @@ jobs:
         mdbook --version
     - name: Run tests
       run: mdbook test
-    - name: Check for broken links
-      run: |
-        curl -sSLo linkcheck.sh \
-          https://raw.githubusercontent.com/rust-lang/rust/master/src/tools/linkchecker/linkcheck.sh
-        sh linkcheck.sh --all nomicon

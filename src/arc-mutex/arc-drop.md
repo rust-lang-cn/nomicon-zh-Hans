@@ -22,12 +22,13 @@ let inner = unsafe { self.ptr.as_ref() };
 
 <!-- ignore: simplified code -->
 ```rust,ignore
-if inner.rc.fetch_sub(1, Ordering::Relaxed) != 1 {
+if inner.rc.fetch_sub(1, Ordering::Release) != 1 {
     return;
 }
 ```
 
 然后我们需要创建一个原子屏障来防止重新排序使用数据和删除数据。正如[标准库对`Arc`的实现][3]中所述。
+
 > 需要这个内存屏障来防止数据使用的重新排序和数据的删除。因为它被标记为“Release”，引用计数的减少与“Acquire”屏障同步。这意味着数据的使用发生在减少引用计数之前，而减少引用计数发生在这个屏障之前，而屏障发生在数据的删除之前。（译者注：use < decrease < 屏障 < delete）
 >
 > 正如[Boost 文档][1]中所解释的那样。
