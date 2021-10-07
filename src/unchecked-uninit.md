@@ -11,7 +11,7 @@ use std::mem::{self, MaybeUninit};
 
 // 数组的大小是硬编码的，可以很方便地修改（改变几个硬编码的常数非常容易）
 // 这表示我们不能用 [a, b, c] 这种方式初始化数组，因为我们必须要和硬编码中的 `SIZE` 保持同步！
-const SIZE: usize = 10
+const SIZE: usize = 10;
 
 let x = {
     // 创建一个未初始化，类型为 `MaybeUninit` 的数组，

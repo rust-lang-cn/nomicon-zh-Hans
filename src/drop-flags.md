@@ -28,11 +28,12 @@ y = x;                   // y 已初始化；销毁 y，覆盖它的值，设置
 类似地，所有分支都在初始化方面具有相同行为的代码具有`静态`丢弃语义：
 
 ```rust
+# let condition = true;
 let mut x = Box::new(0); // x 未初始化；仅覆盖值
 if condition {
     drop(x);             // x 失去值；设置 x 为未初始化
 } else {
-    printn!("{}", x);
+    println!("{}", x);
     drop(x);             // x 失去值；设置 x 为未初始化
 }
 x = Box::new(0);         // x 未初始化；仅覆盖值
