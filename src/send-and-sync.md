@@ -68,7 +68,7 @@ impl<T> Carton<T> {
     pub fn new(value: T) -> Self {
         // 在堆上分配足够的可以存储一个类型 T 大小的空间
         assert_ne!(size_of::<T>(), 0, "Zero-sized types are out of the scope of this example");
-        let mut memptr = ptr::null_mut() as *mut T;
+        let mut memptr: *mut T = ptr::null_mut();
         unsafe {
             let ret = libc::posix_memalign(
                 (&mut memptr).cast(),
@@ -79,8 +79,8 @@ impl<T> Carton<T> {
         };
 
         // NonNull 仅仅是对于指针的一层封装，强制要求指针是非空的
-        let mut ptr = unsafe {
-            // 安全保证：因为我们创建了 memptr，并且独占了所有权，所以可以解引用
+        let ptr = {
+            // 安全保证：因为我们从一个引用创建了 memptr，并且独占了所有权，所以可以解引用
             ptr::NonNull::new(memptr.cast::<T>())
                 .expect("Guaranteed non-null if posix_memalign returns 0")
         };

@@ -1,7 +1,8 @@
 [book]
-author = "The Rust Project Developers. Translated by Pure White."
-title = "Rust 死灵书"
-description = "The Dark Arts of Advanced and Unsafe Rust Programming"
+author = ["The Rust Project Developers", "Pure White."]
+title = "Rust 秘典（死灵书）"
+description = "Unsafe Rust 的黑魔法指南"
+language = "zh-hans"
 
 [output.html]
 additional-css = ["theme/nomicon.css"]
