@@ -114,7 +114,7 @@ impl<T> Drop for Rc<T> {
 
 ## thread::scoped::JoinGuard
 
-> 译者注：实际上这个 API 很早就从标准库中删除了，具体原因可以参考 https://github.com/rust-lang/rust/issues/24292。
+> 实际上这个 API 很早就从标准库中删除了，具体原因可以参考 https://github.com/rust-lang/rust/issues/24292。
 >
 > 原文也有人提过 issue 询问是否可以删除，得到了答复说，这个例子仍然是非常重要的，所以保留了下来：https://github.com/rust-lang/nomicon/issues/57。
 
