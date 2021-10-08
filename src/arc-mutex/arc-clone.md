@@ -70,9 +70,8 @@ use std::sync::atomic::Ordering;
 impl<T> Clone for Arc<T> {
     fn clone(&self) -> Arc<T> {
         let inner = unsafe { self.ptr.as_ref() };
-        // Using a relaxed ordering is alright here as we don't need any atomic
-        // synchronization here as we're not modifying or accessing the inner
-        // data.
+        // 我们没有修改 Arc 中的数据，因此在这里不需要任何原子的同步操作，
+        // 使用 relax 这种排序方式也就完全可行了
         let old_rc = inner.rc.fetch_add(1, Ordering::Relaxed);
 
         if old_rc >= isize::MAX as usize {

@@ -21,7 +21,7 @@ impl<T: Clone> Vec<T> {
     fn push_all(&mut self, to_push: &[T]) {
         self.reserve(to_push.len());
         unsafe {
-            // can't overflow because we just reserved this
+            // 因为我们刚刚预留了空间，所以这里不会溢出
             self.set_len(self.len() + to_push.len());
 
             for (i, x) in to_push.iter().enumerate() {
@@ -102,7 +102,7 @@ bubble_up(heap, index):
 ```rust,ignore
 struct Hole<'a, T: 'a> {
     data: &'a mut [T],
-    /// `elt` is always `Some` from new until drop.
+    /// `elt` 从始至终都是 Some
     elt: Option<T>,
     pos: usize,
 }
@@ -146,7 +146,7 @@ impl<'a, T> Drop for Hole<'a, T> {
 impl<T: Ord> BinaryHeap<T> {
     fn sift_up(&mut self, pos: usize) {
         unsafe {
-            // Take out the value at `pos` and create a hole.
+            // 取出 `pos` 的值，然后创建一个 hole
             let mut hole = Hole::new(&mut self.data, pos);
 
             while hole.pos() != 0 {
@@ -154,7 +154,7 @@ impl<T: Ord> BinaryHeap<T> {
                 if hole.removed() <= hole.get(parent) { break }
                 hole.move_to(parent);
             }
-            // Hole will be unconditionally filled here; panic or not!
+            // 无论是否 panic，这里的 hole 都会被无条件填充
         }
     }
 }

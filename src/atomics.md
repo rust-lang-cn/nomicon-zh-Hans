@@ -38,7 +38,7 @@ y = 3;
 ```text
 initial state: x = 0, y = 1
 
-THREAD 1        THREAD2
+线程 1           线程 2
 y = 3;          if x == 1 {
 x = 1;              y *= 2;
                 }
@@ -101,17 +101,17 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 
 fn main() {
-    let lock = Arc::new(AtomicBool::new(false)); // value answers "am I locked?"
+    let lock = Arc::new(AtomicBool::new(false)); // 我上锁了吗
 
-    // ... distribute lock to threads somehow ...
+    // ... 用某种方式将锁分发到各个线程(thread::spawn) ...
 
-    // Try to acquire the lock by setting it to true
+    // 尝试将原子变量设置为 true，以此来获得锁
     while lock.compare_and_swap(false, true, Ordering::Acquire) { }
-    // broke out of the loop, so we successfully acquired the lock!
+    // 从循环中跳出，说明此时已经获取了锁
 
-    // ... scary data accesses ...
+    // ... 恐怖的数据访问 ...
 
-    // ok we're done, release the lock
+    // 工作完成了，释放锁
     lock.store(false, Ordering::Release);
 }
 ```

@@ -7,9 +7,9 @@
 use std::marker::PhantomData;
 
 struct Drain<'a, T: 'a> {
-    // Need to bound the lifetime here, so we do it with `&'a mut Vec<T>`
-    // because that's semantically what we contain. We're "just" calling
-    // `pop()` and `remove(0)`.
+    // 这里需要限制生命周期, 因此我们使用了 `&'a mut Vec<T>`，
+    // 也就是我们语义上包含的内容，
+    // 我们只会调用 `pop()` 和 `remove(0)` 两个方法
     vec: PhantomData<&'a mut Vec<T>>,
     start: *const T,
     end: *const T,
@@ -32,17 +32,15 @@ struct RawValIter<T> {
 }
 
 impl<T> RawValIter<T> {
-    // unsafe to construct because it has no associated lifetimes.
-    // This is necessary to store a RawValIter in the same struct as
-    // its actual allocation. OK since it's a private implementation
-    // detail.
+    // 构建 RawValIter 是不安全的，因为它没有关联的生命周期，
+    // 将 RawValIter 存储在与它实际分配相同的结构体中是非常有必要的，
+    // 但这里是具体的实现细节，不用对外公开
     unsafe fn new(slice: &[T]) -> Self {
         RawValIter {
             start: slice.as_ptr(),
             end: if slice.len() == 0 {
-                // if `len = 0`, then this is not actually allocated memory.
-                // Need to avoid offsetting because that will give wrong
-                // information to LLVM via GEP.
+                // 如果 `len = 0`, 说明没有分配内存，需要避免使用 offset，
+                // 因为那样会给 LLVM 的 GEP 传递错误的信息
                 slice.as_ptr()
             } else {
                 slice.as_ptr().add(slice.len())
@@ -51,7 +49,7 @@ impl<T> RawValIter<T> {
     }
 }
 
-// Iterator and DoubleEndedIterator impls identical to IntoIter.
+// Iterator 和 DoubleEndedIterator 和 IntoIter 实现起来很类似
 ```
 
 IntoIter 我们可以改成这样：
@@ -59,7 +57,7 @@ IntoIter 我们可以改成这样：
 <!-- ignore: simplified code -->
 ```rust,ignore
 pub struct IntoIter<T> {
-    _buf: RawVec<T>, // we don't actually care about this. Just need it to live.
+    _buf: RawVec<T>,
     iter: RawValIter<T>,
 }
 
@@ -130,9 +128,9 @@ impl<T> Vec<T> {
         unsafe {
             let iter = RawValIter::new(&self);
 
-            // this is a mem::forget safety thing. If Drain is forgotten, we just
-            // leak the whole Vec's contents. Also we need to do this *eventually*
-            // anyway, so why not do it now?
+            // 这里事关 mem::forget 的安全。
+            // 如果 Drain 被 forget，我们就会泄露整个 Vec 的内存，
+            // 既然我们始终要做这一步，为何不在这里完成呢？
             self.len = 0;
 
             Drain {

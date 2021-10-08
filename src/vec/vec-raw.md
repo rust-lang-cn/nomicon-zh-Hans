@@ -29,17 +29,17 @@ impl<T> RawVec<T> {
         let (new_cap, new_layout) = if self.cap == 0 {
             (1, Layout::array::<T>(1).unwrap())
         } else {
-            // This can't overflow because we ensure self.cap <= isize::MAX.
+            // 保证新申请的内存没有超出 `isize::MAX` 字节
             let new_cap = 2 * self.cap;
 
-            // Layout::array checks that the number of bytes is <= usize::MAX,
-            // but this is redundant since old_layout.size() <= isize::MAX,
-            // so the `unwrap` should never fail.
+            // `Layout::array` 会检查申请的空间是否小于等于 usize::MAX，
+            // 但是因为 old_layout.size() <= isize::MAX，
+            // 所以这里的 unwrap 永远不可能失败
             let new_layout = Layout::array::<T>(new_cap).unwrap();
             (new_cap, new_layout)
         };
 
-        // Ensure that the new allocation doesn't exceed `isize::MAX` bytes.
+        // 保证新申请的内存没有超出 `isize::MAX` 字节
         assert!(new_layout.size() <= isize::MAX as usize, "Allocation too large");
 
         let new_ptr = if self.cap == 0 {
@@ -50,7 +50,7 @@ impl<T> RawVec<T> {
             unsafe { alloc::realloc(old_ptr, old_layout, new_layout.size()) }
         };
 
-        // If allocation fails, `new_ptr` will be null, in which case we abort.
+        // 如果分配失败，`new_ptr` 就会成为空指针，我们需要对应 abort 的操作
         self.ptr = match NonNull::new(new_ptr as *mut T) {
             Some(p) => p,
             None => alloc::handle_alloc_error(new_layout),
@@ -96,7 +96,7 @@ impl<T> Vec<T> {
         }
     }
 
-    // push/pop/insert/remove largely unchanged:
+    // push/pop/insert/remove 这些操作做了小小的改变，如下所示:
     // * `self.ptr.as_ptr() -> self.ptr()`
     // * `self.cap -> self.cap()`
     // * `self.grow() -> self.buf.grow()`
@@ -105,7 +105,7 @@ impl<T> Vec<T> {
 impl<T> Drop for Vec<T> {
     fn drop(&mut self) {
         while let Some(_) = self.pop() {}
-        // deallocation is handled by RawVec
+        // RawVec 来负责释放内存
     }
 }
 ```
@@ -115,17 +115,17 @@ impl<T> Drop for Vec<T> {
 <!-- ignore: simplified code -->
 ```rust,ignore
 pub struct IntoIter<T> {
-    _buf: RawVec<T>, // we don't actually care about this. Just need it to live.
+    _buf: RawVec<T>, // 我们实际上并不关心这个，只需要他们保证分配的空间不被释放
     start: *const T,
     end: *const T,
 }
 
-// next and next_back literally unchanged since they never referred to the buf
+// next 和 next_back 保持不变，因为它们并没有用到 buf
 
 impl<T> Drop for IntoIter<T> {
     fn drop(&mut self) {
-        // only need to ensure all our elements are read;
-        // buffer will clean itself up afterwards.
+        // 我们只需要确保 Vec 中所有元素都被读取了，
+        // 在这之后这些元素会被自动清理
         for _ in &mut *self {}
     }
 }
@@ -133,8 +133,8 @@ impl<T> Drop for IntoIter<T> {
 impl<T> Vec<T> {
     pub fn into_iter(self) -> IntoIter<T> {
         unsafe {
-            // need to use ptr::read to unsafely move the buf out since it's
-            // not Copy, and Vec implements Drop (so we can't destructure it).
+            // 需要使用 ptr::read 非安全地把 buf 移出，因为它没有实现 Copy，
+            // 而且 Vec 实现了 Drop Trait (因此我们不能销毁它)
             let buf = ptr::read(&self.buf);
             let len = self.len;
             mem::forget(self);
@@ -142,7 +142,7 @@ impl<T> Vec<T> {
             IntoIter {
                 start: buf.ptr.as_ptr(),
                 end: if buf.cap == 0 {
-                    // can't offset off of a pointer unless it's part of an allocation
+                    // 不能通过这个指针获取偏移，除非已经分配了内存
                     buf.ptr.as_ptr()
                 } else {
                     buf.ptr.as_ptr().add(len)

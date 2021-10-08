@@ -233,7 +233,7 @@ extern {
 fn main() {
     unsafe {
         register_callback(callback);
-        trigger_callback(); // Triggers the callback.
+        trigger_callback(); // 触发回调
     }
 }
 ```
@@ -250,7 +250,7 @@ int32_t register_callback(rust_callback callback) {
 }
 
 void trigger_callback() {
-  cb(7); // Will call callback(7) in Rust.
+  cb(7); // 在 Rust 中会调用回调函数 callback(7)
 }
 ```
 
@@ -267,13 +267,13 @@ Rust 代码：
 ```rust,no_run
 struct RustObject {
     a: i32,
-    // Other members...
+    // 其余的成员...
 }
 
 extern "C" fn callback(target: *mut RustObject, a: i32) {
     println!("I'm called from C with value {0}", a);
     unsafe {
-        // Update the value in RustObject with the value received from the callback:
+        // 在回调函数中更新 RustObject 的内容
         (*target).a = a;
     }
 }
@@ -286,7 +286,7 @@ extern {
 }
 
 fn main() {
-    // Create the object that will be referenced in the callback:
+    // 创建一个会被在回调函数中引用的 RustObject
     let mut rust_object = Box::new(RustObject { a: 5 });
 
     unsafe {
@@ -310,7 +310,7 @@ int32_t register_callback(void* callback_target, rust_callback callback) {
 }
 
 void trigger_callback() {
-  cb(cb_target, 7); // Will call callback(&rustObject, 7) in Rust.
+  cb(cb_target, 7); // 这会调用 Rust 代码中的 callback(&rustObject, 7)
 }
 ```
 
@@ -464,7 +464,7 @@ fn main() {
 正常的 Rust 函数*不能*是可变参数的：
 
 ```rust,compile_fail
-// This will not compile
+// 这不会编译通过
 
 fn foo(x: i32, ...) {}
 ```
@@ -485,16 +485,17 @@ use libc::c_int;
 
 # #[cfg(hidden)]
 extern "C" {
-    /// Registers the callback.
+    /// 注册回调函数
     fn register(cb: Option<extern "C" fn(Option<extern "C" fn(c_int) -> c_int>, c_int) -> c_int>);
 }
 # unsafe fn register(_: Option<extern "C" fn(Option<extern "C" fn(c_int) -> c_int>,
 #                                            c_int) -> c_int>)
 # {}
 
-/// This fairly useless function receives a function pointer and an integer
-/// from C, and returns the result of calling the function with the integer.
-/// In case no function is provided, it squares the integer by default.
+// 这个函数其实没什么实际的用处，
+// 它从C代码接受一个函数指针和一个整数，
+// 用整数做参数，调用指针指向的函数，并返回函数的返回值，
+// 如果没有指定函数，那默认就返回整数的平方
 extern "C" fn apply(process: Option<extern "C" fn(c_int) -> c_int>, int: c_int) -> c_int {
     match process {
         Some(f) => f(int),
@@ -581,7 +582,7 @@ extern "C" {
 这是一种完全有效的处理方式。然而，我们可以做得更好一点。为了解决这个问题，一些 C 库会创建一个`struct`，其中结构的细节和内存布局是私有的，这提供了某种程度的类型安全。这些结构被称为“不透明的”。下面是一个例子，在 C 语言中：
 
 ```c
-struct Foo; /* Foo is a structure, but its contents are not part of the public interface */
+struct Foo; /* Foo 是一个接口，但它的内容不属于公共接口 */
 struct Bar;
 void foo(struct Foo *arg);
 void bar(struct Bar *arg);

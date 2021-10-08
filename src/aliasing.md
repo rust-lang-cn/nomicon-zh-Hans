@@ -2,9 +2,9 @@
 
 首先，让我们先说一些重要的注意事项：
 
-* 为了便于讨论，我们将使用最广泛的别名定义。Rust 的定义可能会有更多限制，以考虑到可变性和有效性。
+- 为了便于讨论，我们将使用最广泛的别名定义。Rust 的定义可能会有更多限制，以考虑到可变性和有效性。
 
-* 我们将假设一个单线程的、无中断的执行，我们还将忽略像内存映射硬件这样的东西。Rust 假定这些事情不会发生，除非你明确告诉它会发生。更多细节，请参阅[并发性章节](concurrency.html)。
+- 我们将假设一个单线程的、无中断的执行，我们还将忽略像内存映射硬件这样的东西。Rust 假定这些事情不会发生，除非你明确告诉它会发生。更多细节，请参阅[并发性章节](concurrency.html)。
 
 所以，我们现行的定义是：如果变量和指针指向内存的重叠区域，那么它们就是*别名*。
 
@@ -22,7 +22,7 @@ fn compute(input: &u32, output: &mut u32) {
     if *input > 5 {
         *output *= 2;
     }
-    // remember that `output` will be `2` if `input > 10`
+    // 记住一点: 如果 `input>10`，那么 `output` 永远为 `2`
 }
 ```
 
@@ -30,11 +30,12 @@ fn compute(input: &u32, output: &mut u32) {
 
 ```rust
 fn compute(input: &u32, output: &mut u32) {
-    let cached_input = *input; // keep `*input` in a register
+    let cached_input = *input; // 将 `*input` 中的内容保存在寄存器中
     if cached_input > 10 {
-        // If the input is greater than 10, the previous code would set the output to 1 and then double it,
-        // resulting in an output of 2 (because `>10` implies `>5`).
-        // Here, we avoid the double assignment and just set it directly to 2.
+        // 如果输入比 10 大, 优化之前的代码会将 output 设置为 1，然后乘以 2，
+        // 结果一定返回 `2` （因为 `>10` 包括了 `>5` 的情况），
+        // 因此这里可以进行优化，
+        // 不对 output 重复赋值，直接将其设置为 2
         *output = 2;
     } else if cached_input > 5 {
         *output *= 2;
@@ -47,11 +48,12 @@ fn compute(input: &u32, output: &mut u32) {
 如果按照这样的输入，我们实际上执行的代码如下：
 
 <!-- ignore: expanded code -->
+
 ```rust,ignore
                     //  input ==  output == 0xabad1dea
                     // *input == *output == 20
 if *input > 10 {    // true  (*input == 20)
-    *output = 1;    // also overwrites *input, because they are the same
+    *output = 1;    // 同时覆盖了 input 引用的内容，因为它们实际上引用了同一块内存
 }
 if *input > 5 {     // false (*input == 1)
     *output *= 2;
@@ -65,10 +67,10 @@ if *input > 5 {     // false (*input == 1)
 
 这就是为什么别名分析很重要的原因：它可以让编译器进行有用的优化! 比如：
 
-* 通过证明没有指针访问该值的内存来保持寄存器中的值
-* 通过证明某些内存在我们上次读取后没有被写入，来消除读取
-* 通过证明某些内存在下一次写入之前从未被读过，来消除写入
-* 通过证明读和写之间不相互依赖来对指令进行移动或重排序
+- 通过证明没有指针访问该值的内存来保持寄存器中的值
+- 通过证明某些内存在我们上次读取后没有被写入，来消除读取
+- 通过证明某些内存在下一次写入之前从未被读过，来消除写入
+- 通过证明读和写之间不相互依赖来对指令进行移动或重排序
 
 这些优化也用于证明更大的优化的合理性，如循环矢量化、常数传播和死代码消除。
 

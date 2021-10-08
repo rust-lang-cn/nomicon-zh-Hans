@@ -33,7 +33,7 @@ unsafe impl Sync for MyBox {}
 ```rust
 #![feature(negative_impls)]
 
-// I have some magic semantics for some synchronization primitive!
+// 假设我这里存在一些魔法，对于同步原语有着非常神奇的语义
 struct SpecialThreadToken(u8);
 
 impl !Send for SpecialThreadToken {}
@@ -66,7 +66,7 @@ struct Carton<T>(ptr::NonNull<T>);
 
 impl<T> Carton<T> {
     pub fn new(value: T) -> Self {
-        // Allocate enough memory on the heap to store one T.
+        // 在堆上分配足够的可以存储一个类型 T 大小的空间
         assert_ne!(size_of::<T>(), 0, "Zero-sized types are out of the scope of this example");
         let mut memptr: *mut T = ptr::null_mut();
         unsafe {
@@ -78,18 +78,16 @@ impl<T> Carton<T> {
             assert_eq!(ret, 0, "Failed to allocate or invalid alignment");
         };
 
-        // NonNull is just a wrapper that enforces that the pointer isn't null.
+        // NonNull 仅仅是对于指针的一层封装，强制要求指针是非空的
         let ptr = {
-            // Safety: memptr is dereferenceable because we created it from a
-            // reference and have exclusive access.
-            ptr::NonNull::new(memptr)
+            // 安全保证：因为我们从一个引用创建了 memptr，并且独占了所有权，所以可以解引用
+            ptr::NonNull::new(memptr.cast::<T>())
                 .expect("Guaranteed non-null if posix_memalign returns 0")
         };
 
-        // Move value from the stack to the location we allocated on the heap.
+        // 将数据从栈上复制到堆上
         unsafe {
-            // Safety: If non-null, posix_memalign gives us a ptr that is valid
-            // for writes and properly aligned.
+            // 安全保证：如果 ptr 是非空的，posix_memalign 会返回一个已经内存对齐的有效的可写指针
             ptr.as_ptr().write(value);
         }
 
@@ -110,12 +108,10 @@ impl<T> Deref for Carton<T> {
 
     fn deref(&self) -> &Self::Target {
         unsafe {
-            // Safety: The pointer is aligned, initialized, and dereferenceable
-            //   by the logic in [`Self::new`]. We require writers to borrow the
-            //   Carton, and the lifetime of the return value is elided to the
-            //   lifetime of the input. This means the borrow checker will
-            //   enforce that no one can mutate the contents of the Carton until
-            //   the reference returned is dropped.
+            // 安全保证：self 指针已经内存对齐，并且初始化了, 在 `Self::new` 方法中已经解引用，
+            // 我们要求 writers 引用 Carton，而这里返回值的生命周期和输入的 self 的生命周期对齐，
+            // 因此 borrow checker 会强制保证这一点：
+            // 直到这个引用被 drop，不能修改Carton中的内容
             self.0.as_ref()
         }
     }
@@ -124,12 +120,10 @@ impl<T> Deref for Carton<T> {
 impl<T> DerefMut for Carton<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe {
-            // Safety: The pointer is aligned, initialized, and dereferenceable
-            //   by the logic in [`Self::new`]. We require writers to mutably
-            //   borrow the Carton, and the lifetime of the return value is
-            //   elided to the lifetime of the input. This means the borrow
-            //   checker will enforce that no one else can access the contents
-            //   of the Carton until the mutable reference returned is dropped.
+            // 安全保证：self 指针已经内存对齐，并且初始化了, 在 `Self::new` 方法中已经解引用，
+            // 我们要求 writers 可写引用 Carton，而这里返回值的生命周期和输入的 self 的生命周期对齐，
+            // 因此 borrow checker 会强制保证这一点:
+            // 直到这个引用被 drop，不能访问 Carton 中的内容
             self.0.as_mut()
         }
     }
@@ -140,8 +134,7 @@ impl<T> DerefMut for Carton<T> {
 
 ```rust
 # struct Carton<T>(std::ptr::NonNull<T>);
-// Safety: No one besides us has the raw pointer, so we can safely transfer the
-// Carton to another thread if T can be safely transferred.
+// 安全保证：除了我们没有人拥有Carton中的裸指针，因此，只需要T可以Send，Carton就可以Send
 unsafe impl<T> Send for Carton<T> where T: Send {}
 ```
 
@@ -149,12 +142,12 @@ unsafe impl<T> Send for Carton<T> where T: Send {}
 
 ```rust
 # struct Carton<T>(std::ptr::NonNull<T>);
-// Safety: Since there exists a public way to go from a `&Carton<T>` to a `&T`
-// in an unsynchronized fashion (such as `Deref`), then `Carton<T>` can't be
-// `Sync` if `T` isn't.
-// Conversely, `Carton` itself does not use any interior mutability whatsoever:
-// all the mutations are performed through an exclusive reference (`&mut`). This
-// means it suffices that `T` be `Sync` for `Carton<T>` to be `Sync`:
+// 安全保证：存在将 `&Carton<T>` 转变为 `&T` 的公开 API，
+// 而这些 API 是 unsynchronized 的（比如 `Deref`），
+// 因此只有在T是 `Sync` 的情况下，`Carton<T>` 才可以是 `Sync` 的，
+// 反过来说，`Carton` 本身没有使用到任何 `内部可变性`，
+// 所有可变引用都只能通过独占的方式获取 (`&mut`)，
+// 这也就意味着 `T` 的 `Sync` 特性可以传递给 `Carton<T>`
 unsafe impl<T> Sync for Carton<T> where T: Sync  {}
 ```
 

@@ -18,7 +18,7 @@ Trait 对象代表某种类型，实现了它所指定的 Trait。确切的原�
 结构实际上可以直接存储一个 DST 作为其最后一个字段，但这也会使它们自身成为一个 DST：
 
 ```rust
-// Can't be stored on the stack directly
+// 不能直接存储在栈上
 struct MySuperSlice {
     info: u32,
     data: [u8],
@@ -41,7 +41,7 @@ fn main() {
 
     let dynamic: &MySuperSliceable<[u8]> = &sized;
 
-    // prints: "17 [0, 0, 0, 0, 0, 0, 0, 0]"
+    // 输出："17 [0, 0, 0, 0, 0, 0, 0, 0]"
     println!("{} {:?}", dynamic.info, &dynamic.data);
 }
 ```
@@ -53,13 +53,13 @@ fn main() {
 Rust 也允许类型指定他们不占空间：
 
 ```rust
-struct Nothing; // No fields = no size
+struct Nothing; // 无字段意味着没有大小
 
-// All fields have no size = no size
+// 所有字段都无大小意味着整个结构体无大小
 struct LotsOfNothing {
     foo: Nothing,
-    qux: (),      // empty tuple has no size
-    baz: [u8; 0], // empty array has no size
+    qux: (),      // 空元组无大小
+    baz: [u8; 0], // 空数组无大小
 }
 ```
 
@@ -81,7 +81,7 @@ struct LotsOfNothing {
 Rust 还允许声明*不能被实例化*的类型。这些类型只能在类型层讨论，而不能在值层讨论。空类型可以通过指定一个没有变体的枚举来声明：
 
 ```rust
-enum Void {} // No variants = EMPTY
+enum Void {} // 没有变体的类型 = 空类型
 ```
 
 空类型甚至比 ZST 更加边缘化。空类型的主要作用是为了让某个类型不可达。例如，假设一个 API 需要在一般情况下返回一个结果，但一个特定的情况实际上是不可能的。实际上可以通过返回一个`Result<T, Void>`来在类型级别上传达这个信息。API 的消费者可以放心地 unwrap 这样一个结果，因为他们知道这个值在本质上不可能是`Err`，因为这需要提供一个`Void`类型的值。
@@ -95,7 +95,7 @@ enum Void {}
 
 let res: Result<u32, Void> = Ok(0);
 
-// Err doesn't exist anymore, so Ok is actually irrefutable.
+// 不存在 Err 的情况，所以 Ok 实际上永远都能匹配成功
 let Ok(num) = res;
 ```
 

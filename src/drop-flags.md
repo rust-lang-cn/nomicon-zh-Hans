@@ -5,9 +5,9 @@
 请注意，这不是所有赋值都需要担心的问题。特别是，通过解引用的赋值会无条件地被丢弃，而相对的，在`let`中的赋值无论如何都不会被丢弃：
 
 ```rust
-let mut x = Box::new(0); // let makes a fresh variable, so never need to drop
+let mut x = Box::new(0); // let 创建了一个全新的变量，所以一定(也没有必要)调用 drop
 let y = &mut x;
-*y = Box::new(1); // Deref assumes the referent is initialized, so always drops
+*y = Box::new(1); // 解引用假设原先的变量已经初始化了，因此一定会 drop
 ```
 
 仅当覆盖先前初始化的变量或其子字段之一时，这才是个问题。
@@ -17,27 +17,27 @@ let y = &mut x;
 当然，通常的情况是，一个值的初始化状态在程序的每一个点上都是静态已知的。如果是这种情况，那么编译器理论上可以生成更有效的代码。例如，直线型代码就有这样的*静态丢弃语义（static drop semantics）*：
 
 ```rust
-let mut x = Box::new(0); // x was uninit; just overwrite.
-let mut y = x;           // y was uninit; just overwrite and make x uninit.
-x = Box::new(0);         // x was uninit; just overwrite.
-y = x;                   // y was init; Drop y, overwrite it, and make x uninit!
-                         // y goes out of scope; y was init; Drop y!
-                         // x goes out of scope; x was uninit; do nothing.
+let mut x = Box::new(0); // x 未初始化；仅覆盖值
+let mut y = x;           // y 未初始化；仅覆盖值，并设置 x 为未初始化
+x = Box::new(0);         // x 未初始化；仅覆盖值
+y = x;                   // y 已初始化；销毁 y，覆盖它的值，设置 x 为未初始化
+                         // y 离开作用域；y 已初始化；销毁 y
+                         // x 离开作用域；x 未初始化；什么都不用做
 ```
 
-类似地，所有分支都在初始化方面具有相同行为的代码具有静态丢弃语义：
+类似地，所有分支都在初始化方面具有相同行为的代码具有`静态`丢弃语义：
 
 ```rust
 # let condition = true;
-let mut x = Box::new(0);    // x was uninit; just overwrite.
+let mut x = Box::new(0); // x 未初始化；仅覆盖值
 if condition {
-    drop(x)                 // x gets moved out; make x uninit.
+    drop(x);             // x 失去值；设置 x 为未初始化
 } else {
     println!("{}", x);
-    drop(x)                 // x gets moved out; make x uninit.
+    drop(x);             // x 失去值；设置 x 为未初始化
 }
-x = Box::new(0);            // x was uninit; just overwrite.
-                            // x goes out of scope; x was init; Drop x!
+x = Box::new(0);         // x 未初始化；仅覆盖值
+                         // x 离开作用域；x 已初始化；销毁 x
 ```
 
 然而像这样的代码*需要*运行时的信息来正确地 Drop：
@@ -46,11 +46,11 @@ x = Box::new(0);            // x was uninit; just overwrite.
 # let condition = true;
 let x;
 if condition {
-    x = Box::new(0);        // x was uninit; just overwrite.
+    x = Box::new(0);        // x 未初始化；仅覆盖值
     println!("{}", x);
 }
-                            // x goes out of scope; x might be uninit;
-                            // check the flag!
+                            // x 离开了作用域，可能未初始化
+                            // 检查 drop 标志位!
 ```
 
 当然，在这种情况下，获得静态丢弃语义是很简单的：
