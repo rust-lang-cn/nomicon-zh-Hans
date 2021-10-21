@@ -209,6 +209,69 @@ mod tests {
 
 关于析构器的更多信息，请参见 [Drop trait](https://doc.rust-lang.org/stable/std/ops/trait.Drop.html)。
 
+## 从 C 调用 Rust 代码
+
+你可能想要把 Rust 代码编译成某种形式，以便在 C 中调用。这个并不难，不过需要一些额外的步骤。
+
+### Rust 代码侧
+
+首先，我们假设你有一个 lib 库名字叫`rust_from_c`，其中的`lib.rs`应该包含类似这样的代码：
+
+```rust
+#[no_mangle]
+pub extern "C" fn hello_from_rust() {
+    println!("Hello from Rust!");
+}
+# fn main() {}
+```
+`extern "C"`使得这个函数使用 C 的调用规约，正如下文[外部调用规约]一章所述。
+`no_mangle`属性关闭了 Rust 的 name mangling 特性，这使得我们在链接时有个明确定义的符号名。
+
+接下来，为了把我们的 Rust 代码编译成一个可以直接从 C 调用的共享库，我们需要加这些到`Cargo.toml`中：
+
+```toml
+[lib]
+crate-type = ["cdylib"]
+```
+
+（注意：我们也可以用`staticlib`类型，不过这会需要我们修改一些链接的参数。）
+
+接下来，执行`cargo build`，Rust 侧就搞定啦！
+
+[外部调用规约]: ffi.md#外部调用规约
+
+### C 代码侧
+
+我们将写一段 C 代码来调用`hello_from_rust`并用`gcc`来编译。
+
+C 代码大致是这样：
+
+```c
+int main() {
+    hello_from_rust();
+    return 0;
+}
+```
+
+我们把这个文件命名为`call_rust.c`，并且把它放到我们 crate 的根目录下，然后编译：
+
+```sh
+gcc call_rust.c -o call_rust -lrust_from_c -L./target/debug
+```
+`-l`和`-L`告诉 gcc 去找我们的 Rust 库。
+
+最后，我们可以通过指定`LD_LIBRARY_PATH`来从 C 调用 Rust：
+
+```sh
+$ LD_LIBRARY_PATH=./target/debug ./call_rust
+Hello from Rust!
+```
+
+搞定！
+如果需要更多实际的例子，可以参考[`cbindgen`]。
+
+[`cbindgen`]: https://github.com/eqrion/cbindgen
+
 ## 从 C 代码到 Rust 函数的回调
 
 一些外部库需要使用回调来向调用者报告其当前状态或中间数据，我们可以将 Rust 中定义的函数传递给外部库。这方面的要求是，回调函数被标记为“extern”，并有正确的调用约定，使其可以从 C 代码中调用。
@@ -519,20 +582,6 @@ void register(void (*f)(int (*)(int), int)) {
 ```
 
 实际上，不需要`transmute`!
-
-## 从 C 语言调用 Rust 代码
-
-你可能希望以一种可以从 C 语言中调用它的方式来编译 Rust 代码：
-
-```rust
-#[no_mangle]
-pub extern "C" fn hello_rust() -> *const u8 {
-    "Hello, world!\0".as_ptr()
-}
-# fn main() {}
-```
-
-`extern "C"`使这个函数遵守 C 的调用约定，正如上面“[外部调用约定](ffi.html#外部调用规约)”中所讨论的。`no_mangle`属性关闭了 Rust 的 name mangling 功能，这样就更容易链接到。
 
 ## FFI 和 panic
 
