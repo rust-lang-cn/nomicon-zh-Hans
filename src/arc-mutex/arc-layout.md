@@ -27,7 +27,7 @@ pub struct ArcInner<T> {
 
 为了解决第一个问题，我们可以使用`NonNull<T>`。请注意，`NonNull<T>`是一个围绕原始指针的包装，并声明以下内容：
 
-* 我们是`T`的变体
+* 我们是`T`的协变
 * 我们的指针从不为空
 
 为了解决第二个问题，我们可以包含一个包含`ArcInner<T>`的`PhantomData`标记。这将告诉 drop checker，我们对`ArcInner<T>`（它本身包含`T`）的值有一些所有权的概念。
