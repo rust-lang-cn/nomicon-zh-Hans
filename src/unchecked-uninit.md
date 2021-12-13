@@ -83,7 +83,7 @@ let f1_ptr = unsafe { ptr::addr_of_mut!((*uninit.as_mut_ptr()).field) };
 unsafe { f1_ptr.write(true); }
 let init = unsafe { uninit.assume_init() };
 ```
-d
+
 最后一句话：在阅读旧的 Rust 代码时，你可能会无意中发现被废弃的`mem::uninitialized`函数。这个函数曾经是处理栈上未初始化内存的唯一方法，但它被证明不能与语言的其他部分很好地结合在一起。在新的代码中你总是应该使用`MaybeUninit`来代替，并且当你有机会的时候，可以把旧的代码移植过来。
 
 这就是与未初始化内存打交道的方法。基本上没有任何地方希望得到未初始化的内存，所以如果你要传递它，一定要*非常*小心。
