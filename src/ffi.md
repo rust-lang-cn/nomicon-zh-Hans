@@ -576,7 +576,7 @@ fn main() {
 而 C 语言方面的代码看起来是这样的：
 
 ```c
-void register(void (*f)(int (*)(int), int)) {
+void register(int (*f)(int (*)(int), int)) {
     ...
 }
 ```
