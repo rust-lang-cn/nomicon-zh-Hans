@@ -20,6 +20,7 @@ libc = "0.2.0"
 下面是一个调用外部函数的最小例子，如果你安装了 snappy，它就可以被编译：
 
 <!-- ignore: requires libc crate -->
+
 ```rust,ignore
 use libc::size_t;
 
@@ -43,6 +44,7 @@ fn main() {
 `extern`块可以被扩展到覆盖整个 snappy API：
 
 <!-- ignore: requires libc crate -->
+
 ```rust,ignore
 use libc::{c_int, size_t};
 
@@ -70,9 +72,10 @@ extern {
 
 原始的 C 语言 API 需要被包装起来，以提供内存安全，并使用更高级别的概念，如向量。一个库可以选择只公开安全的高级接口而隐藏不安全的内部细节。
 
-封装一个需要内存 buffer 参数的函数需要使用`slice::raw`模块来操作 Rust Vec 作为内存的指针。Rust的 Vec 被保证为一个连续的内存块，长度是当前包含的元素数，容量是分配的内存的总大小（元素），其中长度必定小于或等于容量：
+封装一个需要内存 buffer 参数的函数需要使用`slice::raw`模块来操作 Rust Vec 作为内存的指针。Rust 的 Vec 被保证为一个连续的内存块，长度是当前包含的元素数，容量是分配的内存的总大小（元素），其中长度必定小于或等于容量：
 
 <!-- ignore: requires libc crate -->
+
 ```rust,ignore
 # use libc::{c_int, size_t};
 # unsafe fn snappy_validate_compressed_buffer(_: *const u8, _: size_t) -> c_int { 0 }
@@ -91,6 +94,7 @@ pub fn validate_compressed_buffer(src: &[u8]) -> bool {
 `snappy_max_compressed_length`函数可以用来分配一个最大容量的 Vec，以容纳压缩后的输出，然后该向量可以作为输出参数传递给`snappy_compress`函数。还会传递一个输出参数来检索压缩后的真实长度，以便设置长度：
 
 <!-- ignore: requires libc crate -->
+
 ```rust,ignore
 # use libc::{size_t, c_int};
 # unsafe fn snappy_compress(a: *const u8, b: size_t, c: *mut u8,
@@ -116,6 +120,7 @@ pub fn compress(src: &[u8]) -> Vec<u8> {
 解压缩也是类似的，因为 snappy 将未压缩的大小作为压缩格式的一部分来存储，`snappy_uncompressed_length`将检索出所需的确切缓冲区大小：
 
 <!-- ignore: requires libc crate -->
+
 ```rust,ignore
 # use libc::{size_t, c_int};
 # unsafe fn snappy_uncompress(compressed: *const u8,
@@ -150,6 +155,7 @@ pub fn uncompress(src: &[u8]) -> Option<Vec<u8>> {
 然后，我们可以添加一些测试来展示如何使用它们：
 
 <!-- ignore: requires libc crate -->
+
 ```rust,ignore
 # use libc::{c_int, size_t};
 # unsafe fn snappy_compress(input: *const u8,
@@ -224,6 +230,7 @@ pub extern "C" fn hello_from_rust() {
 }
 # fn main() {}
 ```
+
 `extern "C"`使得这个函数使用 C 的调用规约，正如下文[外部调用规约]一章所述。
 `no_mangle`属性关闭了 Rust 的 name mangling 特性，这使得我们在链接时有个明确定义的符号名。
 
@@ -247,7 +254,7 @@ crate-type = ["cdylib"]
 C 代码大致是这样：
 
 ```c
-int main() {
+int main(void) {
     hello_from_rust();
     return 0;
 }
@@ -258,6 +265,7 @@ int main() {
 ```sh
 gcc call_rust.c -o call_rust -lrust_from_c -L./target/debug
 ```
+
 `-l`和`-L`告诉 gcc 去找我们的 Rust 库。
 
 最后，我们可以通过指定`LD_LIBRARY_PATH`来从 C 调用 Rust：
@@ -389,14 +397,14 @@ void trigger_callback() {
 
 `extern`块上的`link`属性提供了基本的构建模块，用于指示 rustc 如何链接到本地库。现在有两种可接受的 link 属性的形式：
 
-* `#[link(name = "foo")]`
-* `#[link(name = "foo", kind = "bar")]`
+- `#[link(name = "foo")]`
+- `#[link(name = "foo", kind = "bar")]`
 
 在这两种情况下，`foo`是我们要链接的本地库的名称，在第二种情况下，`bar`是编译器要链接的本地库的类型。目前已知有三种类型的本地库：
 
-* 动态 - `#[link(name = "readline")]`
-* 静态 - `#[link(name = "my_build_dependency", kind = "static")]`
-* 框架 - `#[link(name = "CoreFoundation", kind = "framework")]`
+- 动态 - `#[link(name = "readline")]`
+- 静态 - `#[link(name = "my_build_dependency", kind = "static")]`
+- 框架 - `#[link(name = "CoreFoundation", kind = "framework")]`
 
 注意，框架只在 macOS 上可用。
 
@@ -404,11 +412,11 @@ void trigger_callback() {
 
 来看几个这个模型如何使用的例子：
 
-* 一个本地构建依赖。有时在编写一些 Rust 代码时需要一些 C/C++ 胶水，但以库的形式分发 C/C++ 代码是一种负担。在这种情况下，代码将被归档到`libfoo.a`，然后 Rust crate 将通过`#[link(name = "foo", kind = "static")]`声明一个依赖关系。
+- 一个本地构建依赖。有时在编写一些 Rust 代码时需要一些 C/C++ 胶水，但以库的形式分发 C/C++ 代码是一种负担。在这种情况下，代码将被归档到`libfoo.a`，然后 Rust crate 将通过`#[link(name = "foo", kind = "static")]`声明一个依赖关系。
 
   无论 crate 的输出是什么，本地静态库都会被包含在输出中，这意味着本地静态库的分发是没有必要的。
 
-* 一个正常的动态依赖。常见的系统库（如`readline`）在大量的系统上可用，而这些库的静态副本往往找不到。当这种依赖被包含在 Rust crate 中时，部分目标（如 rlibs）将不会链接到该库，但当 rlib 被包含在最终目标（如二进制）中时，本地库将被链接进来。
+- 一个正常的动态依赖。常见的系统库（如`readline`）在大量的系统上可用，而这些库的静态副本往往找不到。当这种依赖被包含在 Rust crate 中时，部分目标（如 rlibs）将不会链接到该库，但当 rlib 被包含在最终目标（如二进制）中时，本地库将被链接进来。
 
 在 macOS 上，框架的行为与动态库的语义相同。
 
@@ -429,6 +437,7 @@ unsafe fn kaboom(ptr: *const i32) -> i32 { *ptr }
 外部的 API 经常输出一个全局变量，它可以做一些类似于跟踪全局状态的事情。为了访问这些变量，你可以在`extern`块中用`static`关键字来声明它们：
 
 <!-- ignore: requires libc crate -->
+
 ```rust,ignore
 #[link(name = "readline")]
 extern {
@@ -444,6 +453,7 @@ fn main() {
 另外，你可能需要改变由外部接口提供的全局状态。要做到这一点，可以用`mut`声明全局变量，这样我们就可以改变它们：
 
 <!-- ignore: requires libc crate -->
+
 ```rust,ignore
 use std::ffi::CString;
 use std::ptr;
@@ -472,6 +482,7 @@ fn main() {
 大多数外部代码都暴露了一个 C ABI，Rust 在调用外部函数时默认使用平台的 C 调用约定。一些外部函数，最明显的是 Windows API，使用了其他的调用约定。Rust 提供了一种方法来告诉编译器应该使用哪种约定：
 
 <!-- ignore: requires libc crate -->
+
 ```rust,ignore
 #[cfg(all(target_os = "win32", target_arch = "x86"))]
 #[link(name = "kernel32")]
@@ -482,19 +493,19 @@ extern "stdcall" {
 # fn main() { }
 ```
 
-这适用于整个`extern`块。支持的ABI约束列表如下：
+这适用于整个`extern`块。支持的 ABI 约束列表如下：
 
-* `stdcall`
-* `aapcs`
-* `cdecl`
-* `fastcall`
-* `vectorcall` 这是目前隐藏在`abi_vectorcall`特性开关后面的，可能会有变化
-* `Rust`
-* `rust-intrinsic`
-* `system`
-* `C`
-* `win64`
-* `sysv64`
+- `stdcall`
+- `aapcs`
+- `cdecl`
+- `fastcall`
+- `vectorcall` 这是目前隐藏在`abi_vectorcall`特性开关后面的，可能会有变化
+- `Rust`
+- `rust-intrinsic`
+- `system`
+- `C`
+- `win64`
+- `sysv64`
 
 这个列表中的大多数 ABI 是不言自明的，但是`system` ABI 可能看起来有点奇怪。这个约束条件选择了任何合适的 ABI 来与目标库进行交互操作。例如，在 x86 架构的 win32 上，这意味着使用的 ABI 是`stdcall`。然而，在 x86_64 上，windows 使用`C`调用惯例，所以将使用`C`。这意味着在我们之前的例子中，我们可以使用`extern "system" { ... }`来为所有的 windows 系统定义一个块，而不仅仅是 x86 系统。
 
@@ -543,6 +554,7 @@ fn foo(x: i32, ...) {}
 这里有一个臆造的例子：假设某个 C 库有一个用于注册回调的工具，在某些情况下会被调用。回调被传递给一个函数指针和一个整数，它应该以整数为参数运行该函数。所以我们有函数指针在 FFI 边界上双向飞行。
 
 <!-- ignore: requires libc crate -->
+
 ```rust,ignore
 use libc::c_int;
 
@@ -620,6 +632,7 @@ void bar(void *arg);
 我们可以在 Rust 中用`c_void`类型来表示。
 
 <!-- ignore: requires libc crate -->
+
 ```rust,ignore
 extern "C" {
     pub fn foo(arg: *mut libc::c_void);
