@@ -10,21 +10,23 @@ Rust 允许你指定不同于默认的数据布局策略，并为你提供了[�
 
 必须记住`repr(C)`与 Rust 更奇特的数据布局功能的互动。由于它具有“用于 FFI”和“用于布局控制”的双重目的，`repr(C)`可以应用于那些如果通过 FFI 边界就会变得无意义或有问题的类型：
 
-* ZST 仍然是零大小，尽管这不是 C 语言的标准行为，而且明确违背了 C++ 中空类型的行为，即它们仍然应该消耗一个字节的空间
-* DST 指针（宽指针）和 tuple 在 C 语言中没有对应的概念，因此从来不是 FFI 安全的
-* 带有字段的枚举在 C 或 C++ 中也没有对应的概念，但是类型的有效桥接[是被定义的][really-tagged]
-* 如果`T`是一个[FFI 安全的非空指针类型](ffi.html#空指针优化)，`Option<T>`被保证具有与`T`相同的布局和 ABI，因此也是 FFI 安全的。截至目前，这包括`&`、`&mut`和函数指针，所有这些都不能为空。
-* 就`repr(C)`而言，元组结构和结构一样，因为与结构的唯一区别是字段没有命名。
-* `repr(C)`相当于无字段枚举的`repr(u*)`之一（见下一节）。选择的大小是目标平台的 C 应用二进制接口（ABI）的默认枚举大小。请注意，C 语言中的枚举表示法是实现定义的，所以这实际上是一个“最佳猜测”。特别是，当对应的 C 代码在编译时带有某些标志时，这可能是不正确的。
-* 带有`repr(C)`或`repr(u*)`的无字段枚举仍然不能在没有相应变量的情况下设置为整数值，尽管这在 C 或 C++ 中是允许的行为。如果（不安全地）构造一个枚举的实例，但不与它的一个变体相匹配，这是未定义的行为(这使得详尽的匹配可以继续被编写和编译为正常行为)。
+- ZST 仍然是零大小，尽管这不是 C 语言的标准行为，而且明确违背了 C++ 中空类型的行为，即它们仍然应该消耗一个字节的空间
+- DST 指针（宽指针）和 tuple 在 C 语言中没有对应的概念，因此从来不是 FFI 安全的
+- 带有字段的枚举在 C 或 C++ 中也没有对应的概念，但是类型的有效桥接[是被定义的][really-tagged]
+- 如果`T`是一个[FFI 安全的非空指针类型](ffi.html#空指针优化)，`Option<T>`被保证具有与`T`相同的布局和 ABI，因此也是 FFI 安全的。截至目前，这包括`&`、`&mut`和函数指针，所有这些都不能为空。
+- 就`repr(C)`而言，元组结构和结构一样，因为与结构的唯一区别是字段没有命名。
+- `repr(C)`相当于无字段枚举的`repr(u*)`之一（见下一节）。选择的大小是目标平台的 C 应用二进制接口（ABI）的默认枚举大小。请注意，C 语言中的枚举表示法是实现定义的，所以这实际上是一个“最佳猜测”。特别是，当对应的 C 代码在编译时带有某些标志时，这可能是不正确的。
+- 带有`repr(C)`或`repr(u*)`的无字段枚举仍然不能在没有相应变量的情况下设置为整数值，尽管这在 C 或 C++ 中是允许的行为。如果（不安全地）构造一个枚举的实例，但不与它的一个变体相匹配，这是未定义的行为(这使得详尽的匹配可以继续被编写和编译为正常行为)。
 
 ## repr(transparent)
 
 这只能用于具有单个非零尺寸字段的结构（可能还有其他零尺寸字段）。其效果是，整个结构的布局和 ABI 被保证与该字段相同。
 
-我们的目标是使单一字段和结构之间的转换成为可能。一个例子是[`UnsafeCell`]，它可以被转换为它所包装的类型。
+我们的目标是使单一字段和结构之间的转换成为可能。一个例子是[`UnsafeCell`]，它可以被转换为它所包装的类型。（[`UnsafeCell`]也用了一个不稳定的特性[no_niche][no-niche-pull]，所以当它嵌套其它类型的时候，它的 ABI 也并没有一个稳定的保证。）
 
 另外，通过 FFI 传递结构，其中内部字段类型在另一端被期望，这保证了结构的工作。特别是，这对于`struct Foo(f32)`总是具有与`f32`相同的 ABI 是必要的。
+
+只有在唯一的字段为`pub`或其内存布局在文档中所承诺的情况下，该 repr 才被视为一个类型的公共 ABI 的一部分。否则，该内存布局不应被其他 crate 所依赖。
 
 更多细节可以参考[RFC][rfc-transparent]。
 
@@ -81,8 +83,9 @@ assert_eq!(16, size_of::<MyReprOption<&u16>>());
 
 [不安全代码指南]: https://rust-lang.github.io/unsafe-code-guidelines/layout.html
 [ub loads]: https://github.com/rust-lang/rust/issues/27060
-[`UnsafeCell`]: https://doc.rust-lang.org/std/cell/struct.UnsafeCell.html
+[`unsafecell`]: https://doc.rust-lang.org/std/cell/struct.UnsafeCell.html
 [rfc-transparent]: https://github.com/rust-lang/rfcs/blob/master/text/1758-repr-transparent.md
 [really-tagged]: https://github.com/rust-lang/rfcs/blob/master/text/2195-really-tagged-unions.md
 [rust-bindgen]: https://rust-lang.github.io/rust-bindgen/
 [cbindgen]: https://github.com/eqrion/cbindgen
+[no-niche-pull]: https://github.com/rust-lang/rust/pull/68491
