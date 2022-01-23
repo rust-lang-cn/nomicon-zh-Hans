@@ -24,10 +24,12 @@ fn main() {
 }
 ```
 
-如果我们试图天真地用与生命周期部分相同的方式来对这段代码进行解语法糖，我们会遇到一些麻烦：
+如果我们试图天真地用与[生命周期][lt]部分相同的方式来对这段代码进行解语法糖，我们会遇到一些麻烦：
 
 <!-- ignore: desugared code -->
+
 ```rust,ignore
+// NOTE: `&'b data.0` and `'x: {` is not valid syntax!
 struct Closure<F> {
     data: (u8, u16),
     func: F,
@@ -56,10 +58,42 @@ fn main() {
 要完成这个事情，需要使用到高阶 Trait 约束（HRTB）的魔力。我们的解语法糖方式如下：
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 where for<'a> F: Fn(&'a (u8, u16)) -> &'a u8,
+```
+
+或者：
+
+<!-- ignore: simplified code -->
+
+```rust,ignore
+where F: for<'a> Fn(&'a (u8, u16)) -> &'a u8,
 ```
 
 （其中`Fn(a, b, c) -> d`本身只是不稳定的*真正的*`*Fn`特性的语法糖）
 
 `for<'a>`可以理解为“对于所有`'a`的可能”，并且基本上产生一个*无限的* F 必须满足的 trait 约束的列表。不过不用紧张，在`Fn` trait 之外，我们遇到 HRTB 的地方不多，即使是那些地方，我们也有一个很好的魔法糖来处理普通的情况。
+
+最终，我们可以把原本的代码重写成更加显式的样子：
+
+```rust
+struct Closure<F> {
+    data: (u8, u16),
+    func: F,
+}
+impl<F> Closure<F>
+    where for<'a> F: Fn(&'a (u8, u16)) -> &'a u8,
+{
+    fn call(&self) -> &u8 {
+        (self.func)(&self.data)
+    }
+}
+fn do_it(data: &(u8, u16)) -> &u8 { &data.0 }
+fn main() {
+    let clo = Closure { data: (0, 1), func: do_it };
+    println!("{}", clo.call());
+}
+```
+
+[lt]: lifetimes.html
