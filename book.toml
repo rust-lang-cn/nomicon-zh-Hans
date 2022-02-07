@@ -6,7 +6,7 @@ language = "zh-hans"
 
 [output.html]
 additional-css = ["theme/nomicon.css"]
-git-repository-url = "https://github.com/PureWhiteWu/nomicon-zh-Hans"
+git-repository-url = "https://github.com/rust-lang-cn/nomicon-zh-Hans"
 
 [output.html.redirect]
 # Vec-related chapters.
