@@ -254,6 +254,8 @@ crate-type = ["cdylib"]
 C 代码大致是这样：
 
 ```c
+extern void hello_from_rust();
+
 int main(void) {
     hello_from_rust();
     return 0;
