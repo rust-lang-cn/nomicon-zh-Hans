@@ -3,6 +3,7 @@
 接下来，让我们来实现 Drain。 Drain 与 IntoIter 大体上相同，只是它不是消耗 Vec，而是借用 Vec，并且不会修改到其分配。现在我们只实现“基本”的全范围版本。
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 use std::marker::PhantomData;
 
@@ -25,6 +26,7 @@ impl<'a, T> Iterator for Drain<'a, T> {
 ——等等，这看着好像很眼熟？IntoIter 和 Drain 有完全相同的结构，让我们再做一些抽象：
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 struct RawValIter<T> {
     start: *const T,
@@ -55,6 +57,7 @@ impl<T> RawValIter<T> {
 IntoIter 我们可以改成这样：
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 pub struct IntoIter<T> {
     _buf: RawVec<T>,
@@ -77,8 +80,10 @@ impl<T> Drop for IntoIter<T> {
     }
 }
 
-impl<T> Vec<T> {
-    pub fn into_iter(self) -> IntoIter<T> {
+impl<T> IntoIterator for Vec<T> {
+    type Item = T;
+    type IntoIter = IntoIter<T>;
+    fn into_iter(self) -> IntoIter<T> {
         unsafe {
             let iter = RawValIter::new(&self);
 
@@ -99,6 +104,7 @@ impl<T> Vec<T> {
 好了，现在实现 Drain 真的很容易了：
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 use std::marker::PhantomData;
 

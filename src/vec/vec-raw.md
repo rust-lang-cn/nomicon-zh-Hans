@@ -5,6 +5,7 @@
 我们将抽象出`(ptr, cap)`对，并为它们编写分配、增长和释放的逻辑：
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 struct RawVec<T> {
     ptr: NonNull<T>,
@@ -74,6 +75,7 @@ impl<T> Drop for RawVec<T> {
 随后，把 Vec 改成这样：
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 pub struct Vec<T> {
     buf: RawVec<T>,
@@ -113,6 +115,7 @@ impl<T> Drop for Vec<T> {
 最后，我们可以把 IntoIter 改得相当简单：
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 pub struct IntoIter<T> {
     _buf: RawVec<T>, // 我们实际上并不关心这个，只需要他们保证分配的空间不被释放
@@ -130,8 +133,10 @@ impl<T> Drop for IntoIter<T> {
     }
 }
 
-impl<T> Vec<T> {
-    pub fn into_iter(self) -> IntoIter<T> {
+impl<T> IntoIterator for Vec<T> {
+    type Item = T;
+    type IntoIter = IntoIter<T>;
+    fn into_iter(self) -> IntoIter<T> {
         unsafe {
             // 需要使用 ptr::read 非安全地把 buf 移出，因为它没有实现 Copy，
             // 而且 Vec 实现了 Drop Trait (因此我们不能销毁它)

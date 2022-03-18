@@ -24,6 +24,7 @@ IntoIter 也需要是 DoubleEnded，以便能够从两端读取。从后面读�
 所以我们将使用下面的结构。
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 pub struct IntoIter<T> {
     buf: NonNull<T>,
@@ -37,9 +38,12 @@ pub struct IntoIter<T> {
 而这就是我们最终的初始化结果：
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
-impl<T> Vec<T> {
-    pub fn into_iter(self) -> IntoIter<T> {
+impl<T> IntoIterator for Vec<T> {
+    type Item = T;
+    type IntoIter = IntoIter<T>;
+    fn into_iter(self) -> IntoIter<T> {
         // 因为 Vec 实现了 Drop，所以我们不能销毁它
         let ptr = self.ptr;
         let cap = self.cap;
@@ -69,6 +73,7 @@ impl<T> Vec<T> {
 向前迭代：
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 impl<T> Iterator for IntoIter<T> {
     type Item = T;
@@ -95,6 +100,7 @@ impl<T> Iterator for IntoIter<T> {
 向后迭代：
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 impl<T> DoubleEndedIterator for IntoIter<T> {
     fn next_back(&mut self) -> Option<T> {
@@ -113,6 +119,7 @@ impl<T> DoubleEndedIterator for IntoIter<T> {
 因为 IntoIter 拥有其分配的所有权，它需要实现 Drop 来释放它；并且，它也需要在 Drop 里丢弃它所包含的任何没有被迭代到的元素。
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 impl<T> Drop for IntoIter<T> {
     fn drop(&mut self) {
