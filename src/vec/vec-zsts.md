@@ -2,8 +2,8 @@
 
 是时候了！我们将与 ZST（零大小类型）这个幽灵作斗争。安全的 Rust 从来不需要关心这个问题，但是 Vec 在原始指针和原始分配上非常密集，这正是需要关心零尺寸类型的两种情况。我们需要注意两件事：
 
-* 如果你在分配大小上传入 0，原始分配器 API 有未定义的行为。
-* 原始指针偏移量对于零大小的类型来说是无效的（no-ops），这将破坏我们的 C 风格指针迭代器。
+- 如果你在分配大小上传入 0，原始分配器 API 有未定义的行为。
+- 原始指针偏移量对于零大小的类型来说是无效的（no-ops），这将破坏我们的 C 风格指针迭代器。
 
 幸好我们之前把指针迭代器和分配处理分别抽象为`RawValIter`和`RawVec`。现在回过头来看，多么的方便啊。
 
@@ -16,6 +16,7 @@
 由于我们目前的架构，这意味着要写 3 个边界处理，在`RawVec`的每个方法中都有一个：
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 impl<T> RawVec<T> {
     fn new() -> Self {
@@ -92,6 +93,7 @@ impl<T> Drop for RawVec<T> {
 零大小的偏移量是 no-op。这意味着我们目前的设计总是将`start`和`end`初始化为相同的值，而我们的迭代器将一无所获。目前的解决方案是将指针转为整数，增加，然后再转回。
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 impl<T> RawValIter<T> {
     unsafe fn new(slice: &[T]) -> Self {
@@ -109,11 +111,36 @@ impl<T> RawValIter<T> {
 }
 ```
 
-Now we have a different bug. Instead of our iterators not running at all, our iterators now run *forever*. We need to do the same trick in our iterator impls. Also, our size_hint computation code will divide by 0 for ZSTs. Since we'll basically be treating the two pointers as if they point to bytes, we'll just map size 0 to divide by 1.
-
-现在，我们有了另一个 bug：我们的迭代器不再是完全不运行，而是现在的迭代器*永远*都在运行。我们需要在我们的迭代器 impls 中做同样的技巧。另外，我们的 size_hint 计算代码将对 ZST 除以 0。既然我们会把这两个指针当作是指向字节的，所以我们就把大小 0 映射到除以 1。
+现在，我们有了另一个 bug：我们的迭代器不再是完全不运行，而是现在的迭代器*永远*都在运行。我们需要在我们的迭代器 impls 中做同样的技巧。另外，我们的 size_hint 计算代码将对 ZST 除以 0。既然我们会把这两个指针当作是指向字节的，所以我们就把大小 0 映射到除以 1，这样的话`next`的代码如下：
 
 <!-- ignore: simplified code -->
+
+```rust,ignore
+fn next(&mut self) -> Option<T> {
+    if self.start == self.end {
+        None
+    } else {
+        unsafe {
+            let result = ptr::read(self.start);
+            self.start = if mem::size_of::<T>() == 0 {
+                (self.start as usize + 1) as *const _
+            } else {
+                self.start.offset(1)
+            };
+            Some(result)
+        }
+    }
+}
+```
+
+你找到 bug 了嘛？没人看到！连最初的作者也是几年之后闲逛这个页面的时候，觉得这段代码比较可疑，因为这里直接滥用了迭代器的指针当作了 _计数器_，而这就使得了指针 _不对齐_！在使用 ZST 的时候，我们的工作之一就是必须保证指针对齐！_啊这_！
+
+原始指针在任何时候都不需要对齐，所以使用指针作为计数器的基本技巧是 _没问题的_，但是当它们被传递给`ptr::read`时，它们 _应该_ 是对齐的! 这 _可能_ 是不必要的迂腐操作，因为`ptr::read`在处理 ZST 时其实是个 noop，但让我们稍微负责一点，当遇到 ZST 时从`NonNull::dangling`读取。
+
+（或者你也可以在 ZST 路径上调用`read_unaligned`。两者都可以。因为无论哪种方式，我们都是在无中生有，而且都最终编译成 noop。）
+
+<!-- ignore: simplified code -->
+
 ```rust,ignore
 impl<T> Iterator for RawValIter<T> {
     type Item = T;
@@ -122,13 +149,14 @@ impl<T> Iterator for RawValIter<T> {
             None
         } else {
             unsafe {
-                let result = ptr::read(self.start);
-                self.start = if mem::size_of::<T>() == 0 {
-                    (self.start as usize + 1) as *const _
+                if mem::size_of::<T>() == 0 {
+                    self.start = (self.start as usize + 1) as *const _;
+                    Some(ptr::read(NonNull::<T>::dangling().as_ptr()))
                 } else {
-                    self.start.offset(1)
-                };
-                Some(result)
+                    let old_ptr = self.start;
+                    self.start = self.start.offset(1);
+                    Some(ptr::read(old_ptr))
+                }
             }
         }
     }
@@ -147,12 +175,13 @@ impl<T> DoubleEndedIterator for RawValIter<T> {
             None
         } else {
             unsafe {
-                self.end = if mem::size_of::<T>() == 0 {
-                    (self.end as usize - 1) as *const _
+                if mem::size_of::<T>() == 0 {
+                    self.end = (self.end as usize - 1) as *const _;
+                    Some(ptr::read(NonNull::<T>::dangling().as_ptr()))
                 } else {
-                    self.end.offset(-1)
-                };
-                Some(ptr::read(self.end))
+                    self.end = self.end.offset(-1);
+                    Some(ptr::read(self.end))
+                }
             }
         }
     }
