@@ -11,6 +11,7 @@
 > 我所希望的程序没有出现，而是出现了令人战栗的黑暗和不可言喻的孤独。我终于看到了一个可怕的事实，以前从来没有人敢说出来——秘密中不可告人的秘密——这个事实是，这种石头和声音的语言并不是 Rust 的有生命的延续，就像伦敦是老伦敦，巴黎是老巴黎一样，但它实际上是很不安全的，它的蔓延的身体并没有完善地被防腐处理，并且被诡异的动态的东西侵扰，并且这些东西在编译时无能为力。
 >
 > 原文：
+>
 > > Instead of the programs I had hoped for, there came only a shuddering blackness and ineffable loneliness; and I saw at last a fearful truth which no one had ever dared to breathe before — the unwhisperable secret of secrets — The fact that this language of stone and stridor is not a sentient perpetuation of Rust as London is of Old London and Paris of Old Paris, but that it is in fact quite unsafe, its sprawling body imperfectly embalmed and infested with queer animate things which have nothing to do with it as it was in compilation.
 
 本书挖掘了所有可怕的细节，为了写出正确的不安全 Rust 程序，这些细节是必须要了解的。由于这个问题的性质，它可能会导致释放出难以言喻的恐怖，将你的心灵打碎成亿万个绝望的微小碎片。
@@ -19,7 +20,7 @@
 
 如果你需要自己构建死灵书，需要[mdBook]：
 
-[mdBook]: https://github.com/rust-lang/mdBook
+[mdbook]: https://github.com/rust-lang/mdBook
 
 ```bash
 cargo install mdbook
@@ -62,7 +63,7 @@ sh linkcheck.sh --all nomicon-zh-Hans
 
 ## RoadMap
 
-- [ ] 完成代码中注释的翻译
+- [x] 完成代码中注释的翻译
 - [ ] 搭建自动发版部署流程
 - [ ] 完成中英文对照版本，并默认隐藏英文
 - [ ] 有没有可能支持更新订阅？（RSS？）或者有重要更新时邮件提醒？
