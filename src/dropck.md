@@ -3,6 +3,7 @@
 我们已经看到了生命周期如何为我们提供了一些相当简单的规则来确保我们永远不会读到悬空的引用。但是到目前为止，我们只是以一种包容性的方式与 _outlives_ 关系进行了交互。也就是说，当我们谈论`'a: 'b`时，`'a`和`'b`拥有一样长的寿命是可以的。乍一看，这似乎是一个无意义的区别。没有什么东西会和另一个东西同时被丢弃，对吗？这就是为什么我们使用了以下对`let`语句的解语法糖：
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 let x;
 let y;
@@ -11,6 +12,7 @@ let y;
 解语法糖：
 
 <!-- ignore: desugared code -->
+
 ```rust,ignore
 {
     let x;
@@ -25,6 +27,7 @@ let y;
 让我们来试试：
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 let tuple = (vec![], vec![]);
 ```
@@ -96,7 +99,7 @@ error[E0597]: `world.days` does not live long enough
 
 实现`Drop`可以让`Inspector`在被丢弃时执行一些任意的代码。这意味着它有可能观察到那些本该和它生命周期一样长的类型实际上是先被销毁的。
 
-有趣的是，只有泛型需要担心这个问题。如果它们不是泛型的，那么它们唯一能承载的寿命就是`'static`，它将真正地活到永远。这就是为什么这个问题被称为 _sound generic drop_。健壮的泛型丢弃是由 _drop checker_ 强制执行的。截止到本文写作时，关于丢弃检查器如何验证类型的一些更细微的细节还完全是未知数。然而，“大规则”是我们这一节所关注的微妙之处：
+有趣的是，只有泛型需要担心这个问题。如果它们不是泛型的，那么它们唯一能承载的寿命就是`'static`，它将真正地活到永远。这就是为什么这个问题被称为 _sound generic drop_。健壮的泛型丢弃是由 _drop checker_ 强制执行的。截止到本文写作时，关于丢弃检查器（也被称为`dropck`）如何验证类型的一些更细微的细节还完全是未知数。然而，“大规则”是我们这一节所关注的微妙之处：
 
 **对于一个泛型类型来说，要健壮地实现 drop，其泛型参数必须严格超过它的寿命。**
 
@@ -270,4 +273,4 @@ impl<T: fmt::Display> Drop for Inspector<T> {
 
 [rfc1327]: https://github.com/rust-lang/rfcs/blob/master/text/1327-dropck-param-eyepatch.md
 [rfc1857]: https://github.com/rust-lang/rfcs/blob/master/text/1857-stabilize-drop-order.md
-[`ManuallyDrop`]: https://doc.rust-lang.org/std/mem/struct.ManuallyDrop.html
+[`manuallydrop`]: https://doc.rust-lang.org/std/mem/struct.ManuallyDrop.html
