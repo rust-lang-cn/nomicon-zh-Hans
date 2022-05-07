@@ -9,6 +9,7 @@
 对于`push`，如果旧的 len（在 push 被调用之前）是 0，那么我们正好想写到第 0 个索引，所以我们应该用旧的 len 来作为写入的索引。
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 pub fn push(&mut self, elem: T) {
     if self.len == self.cap { self.grow(); }
@@ -24,9 +25,10 @@ pub fn push(&mut self, elem: T) {
 
 是不是很简单! 那么`pop`呢？虽然这次我们要访问的索引被初始化了，但 Rust 不会让我们直接解构内存的位置来把实例移动（move）出去，因为这将使内存未被初始化（译者注：和 push 一样，如果 pop 出的是在 Vec 的内存中的值，那么当这个值被丢弃后，Vec 的这块内存会被 drop，这就出大事了）! 为此我们需要`ptr::read`，它只是从目标地址复制出 bit，并将其解释为 T 类型的值。这将使这个地址的内存在逻辑上未被初始化，尽管事实上那里有一个完美的 T 的实例。
 
-对于`pop`，如果旧的 len 是 1，那我们正好想从第 0 个索引中读出，所以我们应该用新的 len 来作为读出的索引。
+对于`pop`，举个例子，如果旧的 len 是 1，那我们正好想从第 0 个索引中读出，所以我们应该用新的 len 来作为读出的索引。
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 pub fn pop(&mut self) -> Option<T> {
     if self.len == 0 {
