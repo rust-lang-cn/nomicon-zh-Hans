@@ -42,13 +42,14 @@ dbg!(x);
 
 3. 最后，我们必须改变我们数组的类型，以去除`MaybeUninit`。在当前稳定的 Rust 中，这需要一个`transmute`。这种转换是合法的，因为在内存中，`MaybeUninit<T>`看起来和`T`一样。
 
-    然而，请注意，在一般情况下，`Container<MaybeUninit<T>>`与`Container<T>`看起来*并不*一样! 假如`Container`是`Option`，而`T`是`bool`，那么`Option<bool>`就利用了`bool`只有两个有效值，但`Option<MaybeUninit<bool>>`不能这样做，因为`bool`不需要被初始化。
+   然而，请注意，在一般情况下，`Container<MaybeUninit<T>>`与`Container<T>`看起来*并不*一样! 假如`Container`是`Option`，而`T`是`bool`，那么`Option<bool>`就利用了`bool`只有两个有效值，但`Option<MaybeUninit<bool>>`不能这样做，因为`bool`不需要被初始化。
 
-    所以，这取决于`Container`是否允许将`MaybeUninit`转化掉。对于数组来说，它是允许的（最终标准库会通过提供适当的方法来达到这一点）。
+   所以，这取决于`Container`是否允许将`MaybeUninit`转化掉。对于数组来说，它是允许的（最终标准库会通过提供适当的方法来达到这一点）。
 
 让我们在中间的循环上多花一点时间，特别是赋值运算符和它与`drop`的交互。比如这样的代码：
 
 <!-- ignore: simplified code -->
+
 ```rust,ignore
 *x[i].as_mut_ptr() = Box::new(i as u32); // 错误！
 ```
@@ -57,20 +58,20 @@ dbg!(x);
 
 如果由于某种原因我们不能使用`MaybeUninit::new`，正确的选择是使用[`ptr`]模块。特别是，它提供了三个函数，允许我们将字节分配到内存中的某个位置而不丢弃旧值。[`write`]、[`copy`]和[`copy_nonoverlapping`]。
 
-* `ptr::write(ptr, val)`接收一个`val`并将其移动到`ptr`所指向的地址
-* `ptr::copy(src, dest, count)`将`count`个 T 所占用的位从 src 复制到 dest(这等同于 memmove —— 注意参数顺序是相反的！)
-* `ptr::copy_nonoverlapping(src, dest, count)`做的是`copy`的工作，但是在假设两个内存范围不重叠的情况下，速度更快(这等同于 memcpy —— 注意参数顺序是相反的！)
+- `ptr::write(ptr, val)`接收一个`val`并将其移动到`ptr`所指向的地址
+- `ptr::copy(src, dest, count)`将`count`个 T 所占用的位从 src 复制到 dest(这等同于 C 的 memmove —— 注意参数顺序是相反的！)
+- `ptr::copy_nonoverlapping(src, dest, count)`做的是`copy`的工作，但是在假设两个内存范围不重叠的情况下，速度更快(这等同于 C 的 memcpy —— 注意参数顺序是相反的！)
 
 自然不用说，这些函数如果被误用，会造成严重的破坏，或者直接导致未定义行为。这些函数*本身*需要的唯一东西是，你想读和写的位置已经被分配并正确对齐。然而，向内存的任意位置写入任意位的方式所带来的问题是无穷无尽的。
 
 值得注意的是，你不需要担心在未实现`Drop`或者不包含`Drop`类型的类型上使用`ptr::write`带来的问题，因为 Rust 知道这个信息，并且不会调用`drop`。这也是我们在上面的例子中所依赖的。
 
-然而，当你处理未初始化的内存时，你需要时刻警惕 Rust 试图在它们完全初始化之前丢弃你创建的这些值。如果它有一个析构器的话，该变量作用域内的每个控制路径必须在结束前初始化该值。*[这包括 panic]（unwinding.html）*。`MaybeUninit`在这方面有一点用，因为它不会隐式地丢弃它的内容——但在 panic 的情况下，这实际上意味着不是对尚未初始化的部分进行双重释放，而是对已经初始化的部分导致了内存泄漏。
+然而，当你处理未初始化的内存时，你需要时刻警惕 Rust 试图在它们完全初始化之前丢弃你创建的这些值。如果它有一个析构器的话，该变量作用域内的每个控制路径必须在结束前初始化该值。_[这包括 panic]（unwinding.html）_。`MaybeUninit`在这方面有一点用，因为它不会隐式地丢弃它的内容——但在 panic 的情况下，这实际上意味着不是对尚未初始化的部分进行双重释放，而是对已经初始化的部分导致了内存泄漏。
 
 注意，为了使用`ptr`方法，你需要首先获得一个你想初始化的数据的*raw pointer*。对未初始化的数据构建一个*引用*是非法的，这意味着你在获得上述原始指针时必须小心：
 
-* 对于一个`T`的数组，你可以使用`base_ptr.add(idx)`，其中`base_ptr: *mut T`来计算数组索引`idx`的地址。这依赖于数组在内存中的布局方式
-* 然而，对于一个结构体，一般来说，我们不知道它是如何布局的，而且我们也不能使用`&mut base_ptr.field`，因为这将创建一个引用。因此，当你使用[`addr_of_mut`]宏的时候，你必须非常小心，这将跳过中间层直接创建一个指向该字段的裸指针：
+- 对于一个`T`的数组，你可以使用`base_ptr.add(idx)`，其中`base_ptr: *mut T`来计算数组索引`idx`的地址。这依赖于数组在内存中的布局方式
+- 然而，对于一个结构体，一般来说，我们不知道它是如何布局的，而且我们也不能使用`&mut base_ptr.field`，因为这将创建一个引用。因此，当你使用[`addr_of_mut`]宏的时候，你必须非常小心，这将跳过中间层直接创建一个指向该字段的裸指针：
 
 ```rust
 use std::{ptr, mem::MaybeUninit};
@@ -88,7 +89,7 @@ let init = unsafe { uninit.assume_init() };
 
 这就是与未初始化内存打交道的方法。基本上没有任何地方希望得到未初始化的内存，所以如果你要传递它，一定要*非常*小心。
 
-[`MaybeUninit`]: https://doc.rust-lang.org/core/mem/union.MaybeUninit.html
+[`maybeuninit`]: https://doc.rust-lang.org/core/mem/union.MaybeUninit.html
 [assume_init]: https://doc.rust-lang.org/core/mem/union.MaybeUninit.html#method.assume_init
 [`ptr`]: https://doc.rust-lang.org/core/ptr/index.html
 [`addr_of_mut`]: https://doc.rust-lang.org/core/ptr/macro.addr_of_mut.html
