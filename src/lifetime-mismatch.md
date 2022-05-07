@@ -37,6 +37,7 @@ error[E0502]: cannot borrow `foo` as immutable because it is also borrowed as mu
 这是为啥？好吧，我们得到的推理和[上一节例 2][ex2]完全一样。我们对程序进行解语法糖后，可以得到如下结果：
 
 <!-- ignore: desugared code -->
+
 ```rust,ignore
 struct Foo;
 
@@ -65,7 +66,7 @@ fn main() {
 
 ## 不正确地缩减借用
 
-下面的代码无法编译成功，因为 Rust 不明白这个借用已经不需要了，所以保守地退回到使用整个作用域。不过不用担心，这个问题最终会得到解决：
+下面的代码无法编译成功，因为 Rust 发现`map`变量被借用了两次，并且不能推断出在第二次借用之前，第一次借用已经不需要了，所以保守地退回到使用整个作用域作为第一次借用的生命周期。不过不用担心，这个问题最终会得到解决：
 
 ```rust,compile_fail
 # use std::collections::HashMap;
