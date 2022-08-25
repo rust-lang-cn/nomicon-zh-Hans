@@ -31,7 +31,7 @@ let z = &y;
         let y: &'b i32 = &'b x;
         'c: {
             // 'c 同上所示
-            let z: &'c &'b i32 = &'c y;
+            let z: &'c &'b i32 = &'c y; // "a reference to a reference to an i32" (with lifetimes annotated)
         }
     }
 }
