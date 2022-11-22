@@ -20,7 +20,7 @@
 ```rust,ignore
 impl<T> RawVec<T> {
     fn new() -> Self {
-        // !0 等价于 usize::MAX，这一段分支代码在编译期间就可以计算出结果返回的结果，返回给 cap
+        // 这一段分支代码在编译期间就可以计算出结果返回的结果，返回给 cap
         let cap = if mem::size_of::<T>() == 0 { !0 } else { 0 };
 
         // `NonNull::dangling()` 有双重含义:
@@ -28,7 +28,6 @@ impl<T> RawVec<T> {
         RawVec {
             ptr: NonNull::dangling(),
             cap: cap,
-            _marker: PhantomData,
         }
     }
 
