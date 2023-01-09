@@ -25,18 +25,13 @@ impl<T> RawVec<T> {
     }
 
     fn grow(&mut self) {
-        let (new_cap, new_layout) = if self.cap == 0 {
-            (1, Layout::array::<T>(1).unwrap())
-        } else {
-            // 保证新申请的内存没有超出 `isize::MAX` 字节
-            let new_cap = 2 * self.cap;
+        // 保证新申请的内存没有超出 `isize::MAX` 字节
+        let new_cap = if self.cap == 0 { 1 } else { 2 * self.cap };
 
-            // `Layout::array` 会检查申请的空间是否小于等于 usize::MAX，
-            // 但是因为 old_layout.size() <= isize::MAX，
-            // 所以这里的 unwrap 永远不可能失败
-            let new_layout = Layout::array::<T>(new_cap).unwrap();
-            (new_cap, new_layout)
-        };
+        // `Layout::array` 会检查申请的空间是否小于等于 usize::MAX，
+        // 但是因为 old_layout.size() <= isize::MAX，
+        // 所以这里的 unwrap 永远不可能失败
+        let new_layout = Layout::array::<T>(new_cap).unwrap();
 
         // 保证新申请的内存没有超出 `isize::MAX` 字节
         assert!(new_layout.size() <= isize::MAX as usize, "Allocation too large");
