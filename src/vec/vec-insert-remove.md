@@ -15,7 +15,7 @@ pub fn insert(&mut self, index: usize, elem: T) {
     if self.cap == self.len { self.grow(); }
 
     unsafe {
-        // ptr::copy(src, dest, len) 的含义： "从 dst 复制连续的 len 个元素到 src "
+        // ptr::copy(src, dest, len) 的含义： "从 src 复制连续的 len 个元素到 dst "
         ptr::copy(
             self.ptr.as_ptr().add(index),
             self.ptr.as_ptr().add(index + 1),
