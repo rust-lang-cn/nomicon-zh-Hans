@@ -21,7 +21,7 @@
 impl<T> RawVec<T> {
     fn new() -> Self {
         // 这一段分支代码在编译期间就可以计算出结果返回的结果，返回给 cap
-        let cap = if mem::size_of::<T>() == 0 { !0 } else { 0 };
+        let cap = if mem::size_of::<T>() == 0 { usize::MAX } else { 0 };
 
         // `NonNull::dangling()` 有双重含义:
         // `未分配内存 (unallocated)`, `零尺寸 (zero-sized allocation)`
