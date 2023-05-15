@@ -33,4 +33,4 @@ git-repository-url = "https://github.com/rust-lang-cn/nomicon-zh-Hans"
 "./arc.html" = "./arc-mutex/arc.html"
 
 [rust]
-edition = "2018"
+edition = "2021"

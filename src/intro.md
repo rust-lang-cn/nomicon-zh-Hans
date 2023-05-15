@@ -15,7 +15,7 @@
 >
 > 如果大家对于翻译有更好的建议或者想法，欢迎直接 PR~
 >
-> 目前翻译基于 commit：79b53665a7c61d171fb8c5ad0b73b371f9ee6ba7，基于时间：2023/2/13
+> 目前翻译基于 commit：24b09b16fbd0429fddc6e60bd0ea2fc587a29307，基于时间：2023/5/15
 >
 > Q：为什么不基于之前已有的中文版进行改进？
 >
@@ -55,7 +55,7 @@ Rust 秘典挖掘了你在编写不安全 Rust 程序时需要了解的所有可
 
 Rust 秘典不是一个详尽描述标准库中每一个 API 的语义和保证的地方，也不是一个详尽描述 Rust 的每一个特性的地方。
 
-除非另有说明，本书中的 Rust 代码使用 Rust 2018 版。
+除非另有说明，本书中的 Rust 代码使用 Rust 2021 版。
 
 [trpl]: https://doc.rust-lang.org/book/
 [ref]: https://doc.rust-lang.org/reference/index.html
