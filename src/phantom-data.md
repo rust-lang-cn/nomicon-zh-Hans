@@ -13,7 +13,7 @@ struct Iter<'a, T: 'a> {
 
 [unused-param]: https://rust-lang.github.io/rfcs/0738-variance.html#the-corner-case-unused-parameters-and-parameters-that-are-only-used-unsafely
 
-我们使用`PhantomData`来做这个，它是一个特殊的标记类型。`PhantomData`不消耗空间，但为了静态分析的目的，模拟了一个给定类型的字段。这被认为比明确告诉类型系统你想要的变量类型更不容易出错，同时也提供了其他有用的东西，例如 drop check 需要的信息。
+我们使用`PhantomData`来做这个，它是一个特殊的标记类型。`PhantomData`不消耗空间，但为了静态分析的目的，模拟了一个给定类型的字段。这被认为比明确告诉类型系统你想要的变量类型更不容易出错，同时也提供了其他有用的东西，例如 auto traits 和 drop check 需要的信息。
 
 Iter 逻辑上包含一堆`&'a T`，所以这正是我们告诉`PhantomData`要模拟的。
 
@@ -180,14 +180,14 @@ struct Vec<T> {
 下面是一个关于所有可以使用`PhantomData`的神奇方式的表格：
 (covariant:协变，invariant:不变，contravariant:逆变)
 
-| Phantom type                | `'a`      | `T`                         |
-| --------------------------- | --------- | --------------------------- |
-| `PhantomData<T>`            | -         | covariant (with drop check) |
-| `PhantomData<&'a T>`        | covariant | covariant                   |
-| `PhantomData<&'a mut T>`    | covariant | invariant                   |
-| `PhantomData<*const T>`     | -         | covariant                   |
-| `PhantomData<*mut T>`       | -         | invariant                   |
-| `PhantomData<fn(T)>`        | -         | contravariant               |
-| `PhantomData<fn() -> T>`    | -         | covariant                   |
-| `PhantomData<fn(T) -> T>`   | -         | invariant                   |
-| `PhantomData<Cell<&'a ()>>` | invariant | -                           |
+| Phantom type                | `'a`      | `T`                         | `Send`    | `Sync`    |
+|-----------------------------|-----------|-----------------------------|-----------|-----------|
+| `PhantomData<T>`            | -         | covariant (with drop check) | `T: Send` | `T: Sync` |
+| `PhantomData<&'a T>`        | covariant | covariant                   | `T: Sync` | `T: Sync` |
+| `PhantomData<&'a mut T>`    | covariant | invariant                   | `T: Send` | `T: Sync` |
+| `PhantomData<*const T>`     | -         | covariant                   | -         | -         |
+| `PhantomData<*mut T>`       | -         | invariant                   | -         | -         |
+| `PhantomData<fn(T)>`        | -         | contravariant               | `Send`    | `Sync`    |
+| `PhantomData<fn() -> T>`    | -         | covariant                   | `Send`    | `Sync`    |
+| `PhantomData<fn(T) -> T>`   | -         | invariant                   | `Send`    | `Sync`    |
+| `PhantomData<Cell<&'a ()>>` | invariant | -                           | `Send`    | -         |
