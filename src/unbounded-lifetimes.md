@@ -6,11 +6,19 @@
 
 给定一个函数，任何不来自输入的输出生命周期都是无约束的，比如说：
 
-<!-- ignore: simplified code -->
-```rust,ignore
-fn get_str<'a>() -> &'a str;
+<!-- no_run: This example exhibits undefined behavior. -->
+```rust,no_run
+fn get_str<'a>(s: *const String) -> &'a str {
+    unsafe { &*s }
+}
+fn main() {
+    let soon_dropped = String::from("hello");
+    let dangling = get_str(&soon_dropped);
+    drop(soon_dropped);
+    println!("Invalid str: {}", dangling); // Invalid str: gӚ_`
+}
 ```
 
-将产生一个具有无约束生命周期的`&str`。避免无约束生命周期的最简单方法是在函数边界使用生命周期省略。如果一个输出的生命周期被省略了，那么它*必须*被一个输入的生命周期所约束。当然，它也可能被错误的生命周期所约束，但这通常只会引起编译错误，而不是让内存安全被简单地违反。
+避免无约束生命周期的最简单方法是在函数边界使用生命周期省略。如果一个输出的生命周期被省略了，那么它*必须*被一个输入的生命周期所约束。当然，它也可能被错误的生命周期所约束，但这通常只会引起编译错误，而不是让内存安全被简单地违反。
 
 在一个函数中，对生命周期的约束更容易出错。约束生命周期的最安全和最简单的方法是从一个具有约束的生命周期的函数中返回它。然而，如果这样做是不可接受的，可以将引用放在一个有特定生命周期的位置。不幸的是，我们不可能命名一个函数中涉及的所有生命周期。
