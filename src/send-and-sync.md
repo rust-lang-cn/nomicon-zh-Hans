@@ -159,7 +159,7 @@ unsafe impl<T> Sync for Carton<T> where T: Sync  {}
 unsafe impl<T> Send for Carton<T> where Box<T>: Send {}
 ```
 
-现在`Carton<T>`有一个内存泄漏，因为它从未释放它分配的内存。一旦我们解决了这个问题，我们就必须确保满足 Send 的新要求：我们需要确认`free`释放由另一个线程的分配产生的指针。我们可以在[`libc::free`][libc-freedocs]的文档中来确认这么做是可行的。
+现在`Carton<T>`有一个内存泄漏，因为它从未释放它分配的内存。一旦我们解决了这个问题，我们就必须确保满足 Send 的新要求：我们需要确认`free`释放由另一个线程的分配产生的指针。我们可以在[`libc::free`][libc-free-docs]的文档中来确认这么做是可行的。
 
 ```rust
 # struct Carton<T>(std::ptr::NonNull<T>);
