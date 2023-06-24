@@ -597,15 +597,104 @@ void register(int (*f)(int (*)(int), int)) {
 
 实际上，不需要`transmute`!
 
-## FFI 和 panic
+## FFI 和 unwinding
 
-在使用 FFI 时，必须注意`panic!`。一个跨越 FFI 边界的“panic!”是未定义的行为。如果你写的代码可能会出现恐慌，你应该用[`catch_unwind`]在闭包中运行它。
+在使用 FFI 时，必须注意 unwinding。大多数 ABI 的名称有两种变体，一种带有 `-unwind` 后缀而另一种不带。`Rust` 的 ABI 总是允许 unwinding，所以不存在 `Rust-unwind` ABI。
+
+如果你希望 Rust `panic`s 或是外部（例如：C++）的异常能够穿越 FFI 的边界，则必须使用正确的 `-unwind` ABI。相反，如果你不希望 unwinding 可以穿越 FFI 边界，使用非 `unwind` 的 ABI。
+
+> 注意：编译时指定 `panic=abort` 会导致 `panic!` 立即终止进程，无论发生 `panic` 的函数指定了何种 ABI。
+
+如果一个 unwinding 操作遇到了不允许 unwind 的 ABI 边界，具体行为会由 unwinding 的源头决定（Rust `panic` 或是外部异常）：
+
+* `panic` 会导致进程安全终止。
+* 外部异常会导致未定义行为。
+
+注意 `catch_unwind` 和外部异常的交互行为**是未定义的**，同样，`panic` 和外部异常处理机制的交互也是一样（尤其是 C++ 的 `try`/`catch`）。
+
+### Rust `panic` 与 `"C-unwind"`
+
+<!-- ignore: using unstable feature -->
+```rust,ignore
+#[no_mangle]
+extern "C-unwind" fn example() {
+    panic!("Uh oh");
+}
+```
+
+该函数（当编译时指定 `panic=unwind` 时）可以 unwind C++ 的栈帧。
+
+```text
+[通过 `catch_unwind` 停止 unwinding 的 Rust 函数 ]
+      |
+     ...
+      |
+   [C++ 栈]
+      |                           ^
+      | (调用)                     | (向上 unwinding)
+      v                           |
+[Rust 函数 `example`]              |
+      |                           |
+      +----- rust 函数 panics -----+
+```
+
+如果 C++ 的栈上包含对象，它们将会被析构。
+
+### C++ `throw` 与 `"C-unwind"`
+
+<!-- ignore: using unstable feature -->
+```rust,ignore
+#[link(...)]
+extern "C-unwind" {
+    // 一个可能会抛出异常的 C++ 函数
+    fn may_throw();
+}
+#[no_mangle]
+extern "C-unwind" fn rust_passthrough() {
+    let b = Box::new(5);
+    unsafe { may_throw(); }
+    println!("{:?}", &b);
+}
+```
+
+一个有 `try` 语句块的 C++ 函数可以通过调用 `rust_passthrough` 捕获被 `may_throw` 抛出的异常。
+
+```text
+[在 `try` 语句块中调用 `rust_passthrough`的 C++ 函数]
+      |
+     ...
+      |
+[Rust 函数 `rust_passthrough`]
+      |                            ^
+      | (调用)                      | (向上 unwinding)
+      v                            |
+[C++ 函数 `may_throw`]              |
+      |                            |
+      +------ C++ 函数抛出异常 ------+
+```
+
+如果 `may_throw` 抛出了一个异常，`b` 会被正常丢弃。否则将会打印 `5`。
+
+### `panic` 可以在 ABI 边界处停止
+
+```rust
+#[no_mangle]
+extern "C" fn assert_nonzero(input: u32) {
+    assert!(input != 0)
+}
+```
+
+如果以 `0` 为参数调用了 `assert_nonzero`，运行时可以保证（安全地）终止进程, 无论编译时是否指定了 `panic=abort`。
+
+### 提前捕获 `panic`
+
+在写可能会 panic 的 Rust 代码时，如果不希望进程在其 panic 时被终止，必须使用 [`catch_unwind`]：
 
 ```rust
 use std::panic::catch_unwind;
 
 #[no_mangle]
-pub extern fn oh_no() -> i32 {
+pub extern "C" fn oh_no() -> i32 {
     let result = catch_unwind(|| {
         panic!("Oops!");
     });
@@ -618,7 +707,7 @@ pub extern fn oh_no() -> i32 {
 fn main() {}
 ```
 
-请注意，[`catch_unwind`]只捕捉 unwind 的 panic，而不是那些中止进程的恐慌。更多信息请参见[`catch_unwind`]的文档。
+请注意，[`catch_unwind`]只捕捉 unwind 的 panic，而不是那些中止进程的 panic。更多信息请参见[`catch_unwind`]的文档。
 
 [`catch_unwind`]: https://doc.rust-lang.org/std/panic/fn.catch_unwind.html
 
