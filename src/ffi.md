@@ -501,6 +501,7 @@ extern "stdcall" {
 - `aapcs`
 - `cdecl`
 - `fastcall`
+- `thiscall`
 - `vectorcall` 这是目前隐藏在`abi_vectorcall`特性开关后面的，可能会有变化
 - `Rust`
 - `rust-intrinsic`
