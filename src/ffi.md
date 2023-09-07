@@ -87,7 +87,7 @@ pub fn validate_compressed_buffer(src: &[u8]) -> bool {
 }
 ```
 
-上面的“validate_compressed_buffer”包装器使用了一个“unsafe”块，但它通过在函数签名中去掉“unsafe”来保证调用它对所有输入都是安全的。
+上面的`validate_compressed_buffer`包装器使用了一个`unsafe`块，但它通过在函数签名中去掉`unsafe`来保证调用它对所有输入都是安全的。
 
 `snappy_compress`和`snappy_uncompress`函数更复杂，因为还需要分配一个缓冲区来容纳输出。
 
@@ -550,7 +550,7 @@ fn foo(x: i32, ...) {}
 
 某些 Rust 类型被定义为永不为“空”。这包括引用（`&T`, `&mut T`）, Box（`Box<T>`）, 和函数指针（`extern "abi" fn()`）。当与 C 语言对接时，经常使用可能为“空”的指针，这似乎需要一些混乱的`transmute`和/或不安全的代码来处理与 Rust 类型的转换。然而，尝试构造或者使用这些无效的值**是 undefined behavior**，所以你应当使用如下的变通方法。
 
-作为一种特殊情况，如果一个“enum”正好包含两个变体，其中一个不包含数据，另一个包含上面列出的非空类型的字段，那么它就有资格获得“空指针优化”。这意味着不需要额外的空间来进行判别；相反，空的变体是通过将一个`null`的值放入不可空的字段来表示。这被称为“优化”，但与其他优化不同，它保证适用于符合条件的类型。
+作为一种特殊情况，如果一个`enum`正好包含两个变体，其中一个不包含数据，另一个包含上面列出的非空类型的字段，那么它就有资格获得“空指针优化”。这意味着不需要额外的空间来进行判别；相反，空的变体是通过将一个`null`的值放入不可空的字段来表示。这被称为“优化”，但与其他优化不同，它保证适用于符合条件的类型。
 
 最常见的利用空指针优化的类型是`Option<T>`，其中`None`对应于`null`。所以`Option<extern "C" fn(c_int) -> c_int>`是使用 C ABI（对应于 C 类型`int (*)(int)`）来表示可空函数指针的一种正确方式。
 
@@ -598,15 +598,104 @@ void register(int (*f)(int (*)(int), int)) {
 
 实际上，不需要`transmute`!
 
-## FFI 和 panic
+## FFI 和 unwinding
 
-在使用 FFI 时，必须注意`panic!`。一个跨越 FFI 边界的“panic!”是未定义的行为。如果你写的代码可能会出现恐慌，你应该用[`catch_unwind`]在闭包中运行它。
+在使用 FFI 时，必须注意 unwinding。大多数 ABI 的名称有两种变体，一种带有 `-unwind` 后缀而另一种不带。`Rust` 的 ABI 总是允许 unwinding，所以不存在 `Rust-unwind` ABI。
+
+如果你希望 Rust `panic`s 或是外部（例如：C++）的异常能够穿越 FFI 的边界，则必须使用正确的 `-unwind` ABI。相反，如果你不希望 unwinding 可以穿越 FFI 边界，使用非 `unwind` 的 ABI。
+
+> 注意：编译时指定 `panic=abort` 会导致 `panic!` 立即终止进程，无论发生 `panic` 的函数指定了何种 ABI。
+
+如果一个 unwinding 操作遇到了不允许 unwind 的 ABI 边界，具体行为会由 unwinding 的源头决定（Rust `panic` 或是外部异常）：
+
+* `panic` 会导致进程安全终止。
+* 外部异常会导致未定义行为。
+
+注意 `catch_unwind` 和外部异常的交互行为**是未定义的**，同样，`panic` 和外部异常处理机制的交互也是一样（尤其是 C++ 的 `try`/`catch`）。
+
+### Rust `panic` 与 `"C-unwind"`
+
+<!-- ignore: using unstable feature -->
+```rust,ignore
+#[no_mangle]
+extern "C-unwind" fn example() {
+    panic!("Uh oh");
+}
+```
+
+该函数（当编译时指定 `panic=unwind` 时）可以 unwind C++ 的栈帧。
+
+```text
+[通过 `catch_unwind` 停止 unwinding 的 Rust 函数 ]
+      |
+     ...
+      |
+   [C++ 栈]
+      |                           ^
+      | (调用)                     | (向上 unwinding)
+      v                           |
+[Rust 函数 `example`]              |
+      |                           |
+      +----- rust 函数 panics -----+
+```
+
+如果 C++ 的栈上包含对象，它们将会被析构。
+
+### C++ `throw` 与 `"C-unwind"`
+
+<!-- ignore: using unstable feature -->
+```rust,ignore
+#[link(...)]
+extern "C-unwind" {
+    // 一个可能会抛出异常的 C++ 函数
+    fn may_throw();
+}
+#[no_mangle]
+extern "C-unwind" fn rust_passthrough() {
+    let b = Box::new(5);
+    unsafe { may_throw(); }
+    println!("{:?}", &b);
+}
+```
+
+一个有 `try` 语句块的 C++ 函数可以通过调用 `rust_passthrough` 捕获被 `may_throw` 抛出的异常。
+
+```text
+[在 `try` 语句块中调用 `rust_passthrough`的 C++ 函数]
+      |
+     ...
+      |
+[Rust 函数 `rust_passthrough`]
+      |                            ^
+      | (调用)                      | (向上 unwinding)
+      v                            |
+[C++ 函数 `may_throw`]              |
+      |                            |
+      +------ C++ 函数抛出异常 ------+
+```
+
+如果 `may_throw` 抛出了一个异常，`b` 会被正常丢弃。否则将会打印 `5`。
+
+### `panic` 可以在 ABI 边界处停止
+
+```rust
+#[no_mangle]
+extern "C" fn assert_nonzero(input: u32) {
+    assert!(input != 0)
+}
+```
+
+如果以 `0` 为参数调用了 `assert_nonzero`，运行时可以保证（安全地）终止进程, 无论编译时是否指定了 `panic=abort`。
+
+### 提前捕获 `panic`
+
+在写可能会 panic 的 Rust 代码时，如果不希望进程在其 panic 时被终止，必须使用 [`catch_unwind`]：
 
 ```rust
 use std::panic::catch_unwind;
 
 #[no_mangle]
-pub extern fn oh_no() -> i32 {
+pub extern "C" fn oh_no() -> i32 {
     let result = catch_unwind(|| {
         panic!("Oops!");
     });
@@ -619,7 +708,7 @@ pub extern fn oh_no() -> i32 {
 fn main() {}
 ```
 
-请注意，[`catch_unwind`]只捕捉 unwind 的 panic，而不是那些中止进程的恐慌。更多信息请参见[`catch_unwind`]的文档。
+请注意，[`catch_unwind`]只捕捉 unwind 的 panic，而不是那些中止进程的 panic。更多信息请参见[`catch_unwind`]的文档。
 
 [`catch_unwind`]: https://doc.rust-lang.org/std/panic/fn.catch_unwind.html
 

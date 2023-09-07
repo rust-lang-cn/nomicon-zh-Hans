@@ -18,7 +18,7 @@ Casts（译者注：实在没有找到合适的中文表述）是强转的超集
 
 ### 传递性
 
-Casting 不是递归的，也就是说，即使`e as U1 as U2`是一个有效的表达式，`e as U2`也不一定是。
+Casting 不是传递的，也就是说，即使`e as U1 as U2`是一个有效的表达式，`e as U2`也不一定是。
 
 [cast list]: https://doc.rust-lang.org/reference/expressions/operator-expr.html#type-cast-expressions
 [semantics list]: https://doc.rust-lang.org/reference/expressions/operator-expr.html#semantics
