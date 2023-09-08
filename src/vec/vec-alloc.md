@@ -111,7 +111,7 @@ impl<T> Vec<T> {
             unsafe { alloc::realloc(old_ptr, old_layout, new_layout.size()) }
         };
 
-        // 如果分配失败，`new_ptr` 就会称为空指针，我们需要对应 abort 的操作
+        // 如果分配失败，`new_ptr` 就会成为空指针，我们需要对应 abort 的操作
         self.ptr = match NonNull::new(new_ptr as *mut T) {
             Some(p) => p,
             None => alloc::handle_alloc_error(new_layout),

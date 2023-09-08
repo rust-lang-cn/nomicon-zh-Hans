@@ -86,7 +86,7 @@ where
 }
 ```
 
-由于所施加的生命周期限制，`&mut map`的生命周期与其他可变的借用`重叠`，导致编译错误：
+由于所施加的生命周期限制，`&mut map`的生命周期与其他可变的借用重叠，导致编译错误：
 
 ```text
 error[E0499]: cannot borrow `*map` as mutable more than once at a time
