@@ -13,7 +13,7 @@
 与 C 语言不同，Rust 中的“未定义行为”的范围相当有限。核心语言中，你只需要关心防止以下事情：
 
 - 解除引用（使用`*`运算符）悬空或不对齐的指针（见下文）
-- 破坏[指名针别规则][pointer aliasing rules]
+- 破坏[指针别名规则][pointer aliasing rules]
 - 调用一个 ABI 错误的函数，或者从一个 unwind ABI 错误的函数中 unwinding
 - 引起[数据竞争][race]
 - 执行用当前执行线程不支持的[目标特性][target features]编译的代码
