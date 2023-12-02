@@ -60,7 +60,7 @@ error[E0308]: mismatched types
 
 > 但这是 Rustonomicon。我们正在编写不安全的代码，所以我们需要了解这些东西是如何真正工作的，以及我们如何搞乱它。
 
-回到我们上面的例子，我们可以说 `'static` 是 `'world` 的子类型，而又因为生命周期可以通过引用传递（更多内容请参见 [变异性](#variance)），所以`&'static str` 是 `&'world str` 的子类型，通过下文讲述的 _变异性_ 我们可以将 `&'static str` 的生命周期收缩为 `&'world str`。如此，上面的示例可以编译：
+回到我们上面的例子，我们可以说 `'static` 是 `'world` 的子类型，而又因为生命周期可以通过引用传递（更多内容请参见 [变异性](#变异性)），所以`&'static str` 是 `&'world str` 的子类型，通过下文讲述的 _变异性_ 我们可以将 `&'static str` 的生命周期收缩为 `&'world str`。如此，上面的示例可以编译：
 
 ```rust
 fn debug<'a>(a: &'a str, b: &'a str) {
