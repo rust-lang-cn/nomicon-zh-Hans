@@ -130,23 +130,21 @@ impl<T> IntoIterator for Vec<T> {
     type Item = T;
     type IntoIter = IntoIter<T>;
     fn into_iter(self) -> IntoIter<T> {
-        unsafe {
-            // 需要使用 ptr::read 非安全地把 buf 移出，因为它没有实现 Copy，
-            // 而且 Vec 实现了 Drop Trait (因此我们不能销毁它)
-            let buf = ptr::read(&self.buf);
-            let len = self.len;
-            mem::forget(self);
+        // 需要使用 ptr::read 非安全地把 buf 移出，因为它没有实现 Copy，
+        // 而且 Vec 实现了 Drop Trait (因此我们不能销毁它)
+        let buf = unsafe { ptr::read(&self.buf) };
+        let len = self.len;
+        mem::forget(self);
 
-            IntoIter {
-                start: buf.ptr.as_ptr(),
-                end: if buf.cap == 0 {
-                    // 不能通过这个指针获取偏移，除非已经分配了内存
-                    buf.ptr.as_ptr()
-                } else {
-                    buf.ptr.as_ptr().add(len)
-                },
-                _buf: buf,
-            }
+        IntoIter {
+            start: buf.ptr.as_ptr(),
+            end: if buf.cap == 0 {
+                // 不能通过这个指针获取偏移，除非已经分配了内存
+                buf.ptr.as_ptr()
+            } else {
+                unsafe { buf.ptr.as_ptr().add(len) }
+            },
+            _buf: buf,
         }
     }
 }

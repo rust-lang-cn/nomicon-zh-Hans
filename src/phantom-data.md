@@ -78,7 +78,9 @@ impl<T> Drop for Vec<T> { /* … */ }
 
 那么`impl<T> Drop for Vec<T>`这条语句会让 Rust 知道`Vec<T>`_拥有_`T`类型的值（更准确地说：可能会在`Drop`实现中使用`T`类型的值），那么当`Vec<T>`被 drop 的时候，Rust 就不会允许它们 _悬垂_。
 
-**添加一个额外的 `_owns_T: PhantomData<T>` 字段因此是*多余的*并且什么都不做**。
+当一个类型已经有了 `Drop impl` 时，**添加一个额外的 `_owns_T: PhantomData<T>` 字段是多余的，而且没有任何效果**，从 dropck（Drop 检查）的角度来看（它仍然会影响变量和自动特征）。
+
+- （高级边缘情况：如果包含 `PhantomData` 的类型根本没有 `Drop` 实现，但仍然有 drop glue（通过拥有另一个带有 drop glue 的字段），那么这里提到的 dropck/`#[may_dangle]` 规则也同样适用：一个 `PhantomData<T>` 字段将要求 `T` 在包含类型作用域结束时可被丢弃）。
 
 ---
 
@@ -180,14 +182,18 @@ struct Vec<T> {
 下面是一个关于所有可以使用`PhantomData`的神奇方式的表格：
 (covariant:协变，invariant:不变，contravariant:逆变)
 
-| Phantom type                | `'a`      | `T`                         | `Send`    | `Sync`    |
-|-----------------------------|-----------|-----------------------------|-----------|-----------|
-| `PhantomData<T>`            | -         | covariant (with drop check) | `T: Send` | `T: Sync` |
-| `PhantomData<&'a T>`        | covariant | covariant                   | `T: Sync` | `T: Sync` |
-| `PhantomData<&'a mut T>`    | covariant | invariant                   | `T: Send` | `T: Sync` |
-| `PhantomData<*const T>`     | -         | covariant                   | -         | -         |
-| `PhantomData<*mut T>`       | -         | invariant                   | -         | -         |
-| `PhantomData<fn(T)>`        | -         | contravariant               | `Send`    | `Sync`    |
-| `PhantomData<fn() -> T>`    | -         | covariant                   | `Send`    | `Sync`    |
-| `PhantomData<fn(T) -> T>`   | -         | invariant                   | `Send`    | `Sync`    |
-| `PhantomData<Cell<&'a ()>>` | invariant | -                           | `Send`    | -         |
+| Phantom type                | variance of `'a` | variance of `T`   | `Send`/`Sync`<br/>(or lack thereof)       | dangling `'a` or `T` in drop glue<br/>(_e.g._, `#[may_dangle] Drop`) |
+|-----------------------------|:----------------:|:-----------------:|:-----------------------------------------:|:------------------------------------------------:|
+| `PhantomData<T>`            | -                | **cov**ariant     | inherited                                 | disallowed ("owns `T`")                          |
+| `PhantomData<&'a T>`        | **cov**ariant    | **cov**ariant     | `Send + Sync`<br/>requires<br/>`T : Sync` | allowed                                          |
+| `PhantomData<&'a mut T>`    | **cov**ariant    | **inv**ariant     | inherited                                 | allowed                                          |
+| `PhantomData<*const T>`     | -                | **cov**ariant     | `!Send + !Sync`                           | allowed                                          |
+| `PhantomData<*mut T>`       | -                | **inv**ariant     | `!Send + !Sync`                           | allowed                                          |
+| `PhantomData<fn(T)>`        | -                | **contra**variant | `Send + Sync`                             | allowed                                          |
+| `PhantomData<fn() -> T>`    | -                | **cov**ariant     | `Send + Sync`                             | allowed                                          |
+| `PhantomData<fn(T) -> T>`   | -                | **inv**ariant     | `Send + Sync`                             | allowed                                          |
+| `PhantomData<Cell<&'a ()>>` | **inv**ariant    | -                 | `Send + !Sync`                            | allowed                                          |
+
+  - 注意: opt-out Unpin 自动特性需要专用的 [`PhantomPinned`] 类型。
+
+[`PhantomPinned`]: https://doc.rust-lang.org/std/marker/struct.PhantomPinned.html
