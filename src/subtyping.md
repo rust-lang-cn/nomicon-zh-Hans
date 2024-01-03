@@ -268,9 +268,7 @@ thread_local! {
 
 /// 将给定的输入保存到一个thread local的 `Vec<&'static str>`
 fn store(input: &'static str) {
-    StaticVecs.with(|v| {
-        v.borrow_mut().push(input);
-    })
+    StaticVecs.with_borrow_mut(|v| v.push(input));
 }
 
 /// 用有着相同生命周期的参数 `input` 去调用给定的函数
@@ -291,9 +289,8 @@ fn main() {
         demo(&smuggle, store);
     }
 
-    StaticVecs.with(|v| {
-        println!("{:?}", v.borrow()); // 使用在被释放后的值 😿
-    });
+    // use after free 😿
+    StaticVecs.with_borrow(|v| println!("{v:?}"));
 }
 ```
 
