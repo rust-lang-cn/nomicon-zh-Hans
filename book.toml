@@ -7,6 +7,7 @@ language = "zh-hans"
 [output.html]
 additional-css = ["theme/nomicon.css"]
 git-repository-url = "https://github.com/rust-lang-cn/nomicon-zh-Hans"
+search.use-boolean-and = true
 
 [output.html.redirect]
 # Vec-related chapters.
