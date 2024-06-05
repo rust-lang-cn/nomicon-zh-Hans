@@ -13,7 +13,7 @@ libc = { version = "0.2.146", default-features = false }
 
 注意已经禁用了默认功能。这是一个关键步骤——** `libc` 的默认功能包括 `std` crate，因此必须禁用。**
 
-另外，我们可以使用不稳定的 `rustc_private` 私有功能，以及下面示例中显示的 `extern crate libc;` 声明。
+另外，我们可以像下述例子一样，结合使用不稳定的 `rustc_private` 私有功能和 `extern crate libc;` 声明。需要注意的是，windows-msvc target 不需要 libc，对应的在 sysroot 中也不存在 `libc` 这个 crate，因此在 windows-msvc target 下，我们不需要添加这个声明，并且添加了这个声明会导致编译错误。
 
 ## 在没有 `std` 的情况下编写可执行文件
 
@@ -28,11 +28,12 @@ libc = { version = "0.2.146", default-features = false }
 #![allow(internal_features)]
 #![no_std]
 
-// 在某些平台上，对于 `panic = "unwind"` 构建来说是必要的。
+// 在 cfg(unix) 平台上，对于 `panic = "unwind"` 构建来说是必要的。
 #![feature(panic_unwind)]
 extern crate unwind;
 
-// 为 crt0.o 可能需要的系统 libc 库拉取。
+// 导入 crt0.o 可能需要的系统 libc 库。
+#[cfg(not(windows))]
 extern crate libc;
 
 use core::panic::PanicInfo;
@@ -59,11 +60,12 @@ fn panic_handler(_info: &PanicInfo) -> ! { core::intrinsics::abort() }
 #![no_std]
 #![no_main]
 
-// 在某些平台上，对于 `panic = "unwind"` 构建来说是必要的。
+// 在 cfg(unix) 平台上，对于 `panic = "unwind"` 构建来说是必要的。
 #![feature(panic_unwind)]
 extern crate unwind;
 
-// 为 crt0.o 可能需要的系统 libc 库拉取。
+// 导入 crt0.o 可能需要的系统 libc 库。
+#[cfg(not(windows))]
 extern crate libc;
 
 use core::ffi::{c_char, c_int};
