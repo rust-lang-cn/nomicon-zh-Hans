@@ -1,13 +1,18 @@
 [book]
 author = ["The Rust Project Developers", "Pure White."]
 title = "Rust 秘典（死灵书）"
-description = "Unsafe Rust 的黑魔法指南"
-language = "zh-hans"
+description = "高级 Unsafe Rust 编程的黑科技指南"
+language = "zh-Hans"
 
 [output.html]
-additional-css = ["theme/nomicon.css"]
+additional-css = [
+    "theme/nomicon.css",
+    "theme/language-picker.css",
+]
 git-repository-url = "https://github.com/rust-lang-cn/nomicon-zh-Hans"
-search.use-boolean-and = true
+
+[output.html.search]
+use-boolean-and = true
 
 [output.html.redirect]
 # Vec-related chapters.

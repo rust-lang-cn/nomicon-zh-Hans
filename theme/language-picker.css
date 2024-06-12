@@ -1,0 +1,27 @@
+#language-list {
+  left: auto;
+  right: 10px;
+}
+
+[dir="rtl"] #language-list {
+  left: 10px;
+  right: auto;
+}
+
+#language-list a {
+  color: inherit;
+}
+
+#menu-bar .icon-button-wrapper {
+  padding: 0;
+  font: inherit;
+}
+
+#menu-bar .theme-popup{
+  overflow: visible;
+}
+
+#menu-bar .theme-link {
+  display: inline-block;
+  box-sizing: border-box;
+}

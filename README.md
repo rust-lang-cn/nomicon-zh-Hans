@@ -44,19 +44,26 @@ cargo install mdbook --git https://github.com/Sunshine40/mdBook --branch search-
 
 ### `mdBook` 用法
 
-使用 `build` 命令构建《Rust 秘典》_(先确保工作路径位于本项目文件夹根路径)_：
+为了方便一键构建《Rust 秘典》双语对照版本，建议使用：  
+_(先确保工作路径位于本项目文件夹根路径)_
+
+```bash
+./build.sh
+```
+
+构建结果会存放到 `book` 子目录中。用浏览器打开其中的 `index.html` 文件即可查看效果。如果在执行 `./build.sh` 时附带 `--open` 标志，（构建成功后）它就会直接用默认浏览器打开书籍首页，和 `cargo doc --open` 同理：
+
+```bash
+./build.sh --open
+```
+
+也可以使用 `mdbook build` 命令单独构建中文版本（构建英文版本需要仿照 `build.sh` 配置参数）：
 
 ```bash
 mdbook build
 ```
 
-构建结果会存放到 `book` 子目录中。用浏览器打开其中的 `index.html` 文件即可查看效果。如果在执行 `mdbook build` 时附带 `--open` 标志，（构建成功后）它就会直接用默认浏览器打开书籍首页，和 `cargo doc --open` 同理：
-
-```bash
-mdbook build --open
-```
-
-还有一个 `test` 子命令用于测试书中包含的所有代码样例：
+`mdbook` 还有一个 `test` 子命令用于测试书中包含的所有代码样例：
 
 ```bash
 mdbook test
@@ -80,7 +87,7 @@ sh linkcheck.sh --all nomicon-zh-Hans
 ## 后续规划
 
 - [x] 完成代码中注释的翻译
-- [ ] 完成中英文双语版本，支持页内一键切换语言
+- [x] 完成中英文双语版本，支持页内一键切换语言
 - [ ] 搭建自动发版部署流程
 - [ ] 有没有可能支持更新订阅？（RSS？）或者有重要更新时邮件提醒？
 - [ ] more（欢迎通过 issue 提出）
