@@ -146,7 +146,7 @@ fn main() {
 
 有关其他类型，请参见[参考手册的 "变异性" 部分][variance-table]。
 
-[variance-table]: ../reference/subtyping.html#variance
+[variance-table]: https://www.rustwiki.org.cn/zh-CN/reference/subtyping.html#型变
 
 > 注意：语言中唯一的逆变来源于函数参数，这就是为什么它实际上在实践中很少出现。调用逆变涉及到函数指针的高阶编程，这些函数指针需要具有特定生命周期（而不是通常的 "任意生命周期"）的引用，而这将涉及更高级别的生命周期，它们可以独立于子类型化工作。
 
