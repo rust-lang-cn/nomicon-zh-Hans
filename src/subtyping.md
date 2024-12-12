@@ -35,7 +35,7 @@ error[E0308]: mismatched types
    |                      expected `&'static str`, found struct `&'world str`
 ```
 
-这是相当不幸的。在这种情况下，我们希望接受的类型的生命周期至少要和 `'world` 一样长。
+这是相当不幸的。在这种情况下，我们希望接受生命周期至少与 `'world` 一样长的任何类型。
 让我们尝试使用生命周期进行子类型化。
 
 ## 子类型化
