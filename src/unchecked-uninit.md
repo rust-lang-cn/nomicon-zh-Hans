@@ -71,7 +71,7 @@ dbg!(x);
 注意，为了使用`ptr`方法，你需要首先获得一个你想初始化的数据的*raw pointer*。对未初始化的数据构建一个*引用*是非法的，这意味着你在获得上述原始指针时必须小心：
 
 - 对于一个`T`的数组，你可以使用`base_ptr.add(idx)`，其中`base_ptr: *mut T`来计算数组索引`idx`的地址。这依赖于数组在内存中的布局方式
-- 然而，对于一个结构体，一般来说，我们不知道它是如何布局的，而且我们也不能使用`&mut base_ptr.field`，因为这将创建一个引用。因此，当你使用[`addr_of_mut`]宏的时候，你必须非常小心，这将跳过中间层直接创建一个指向该字段的裸指针：
+- 然而，对于一个结构体，一般来说，我们不知道它是如何布局的，而且我们也不能使用`&mut base_ptr.field`，因为这将创建一个引用。因此，当你使用[`raw 引用`][raw_reference]的时候，你必须非常小心，这将跳过中间层直接创建一个指向该字段的裸指针：
 
 ```rust
 use std::{ptr, mem::MaybeUninit};
@@ -80,7 +80,7 @@ struct Demo {
 }
 let mut uninit = MaybeUninit::<Demo>::uninit();
 // `&uninit.as_mut().field`将会创建一个指向未初始化的`bool`的指针，而这是 UB 行为。
-let f1_ptr = unsafe { ptr::addr_of_mut!((*uninit.as_mut_ptr()).field) };
+let f1_ptr = unsafe { &raw mut (*uninit.as_mut_ptr()).field };
 unsafe { f1_ptr.write(true); }
 let init = unsafe { uninit.assume_init() };
 ```
@@ -92,7 +92,7 @@ let init = unsafe { uninit.assume_init() };
 [`maybeuninit`]: https://doc.rust-lang.org/core/mem/union.MaybeUninit.html
 [assume_init]: https://doc.rust-lang.org/core/mem/union.MaybeUninit.html#method.assume_init
 [`ptr`]: https://doc.rust-lang.org/core/ptr/index.html
-[`addr_of_mut`]: https://doc.rust-lang.org/core/ptr/macro.addr_of_mut.html
+[raw_reference]: https://doc.rust-lang.org/reference/types/pointer.html#r-type.pointer.raw.constructor
 [`write`]: https://doc.rust-lang.org/core/ptr/fn.write.html
 [`copy`]: https://doc.rust-lang.org/std/ptr/fn.copy.html
 [`copy_nonoverlapping`]: https://doc.rust-lang.org/std/ptr/fn.copy_nonoverlapping.html
