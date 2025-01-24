@@ -19,40 +19,11 @@ libc = { version = "0.2.146", default-features = false }
 
 我们可能需要编译器的 nightly 版本来生成 `#![no_std]` 可执行文件，因为在许多平台上，我们必须提供不稳定的 `eh_personality` [lang item]。
 
-可以通过两种方式控制入口点：`#[start]` 属性，或者用您自己的函数覆盖 C 语言 `main` 函数的默认实现。此外，还需要定义一个 [panic handler function](panic-handler.html)。
+你需要为你的目标平台定义一个适合的入口点符号，例如 `main`、`_start`、`WinMain` 或任何与你的目标平台相关的入口点名称。
 
-标记为 `#[start]` 的函数会以与 C 语言相同的格式传递命令行参数（除了使用的确切整数类型）：
+此外，你需要使用 `#![no_main]` 属性，以防止编译器尝试自动生成入口点。
 
-```rust
-#![feature(start, lang_items, core_intrinsics, rustc_private)]
-#![allow(internal_features)]
-#![no_std]
-
-// 在 cfg(unix) 平台上，对于 `panic = "unwind"` 构建来说是必要的。
-#![feature(panic_unwind)]
-extern crate unwind;
-
-// 导入 crt0.o 可能需要的系统 libc 库。
-#[cfg(not(windows))]
-extern crate libc;
-
-use core::panic::PanicInfo;
-
-// 本程序的入口点。
-#[start]
-fn main(_argc: isize, _argv: *const *const u8) -> isize {
-    0
-}
-
-// 编译器使用这些函数，但对于像这样的空程序来说并不需要。
-// 它们通常由 `std` 提供。
-#[lang = "eh_personality"]
-fn rust_eh_personality() {}
-#[panic_handler]
-fn panic_handler(_info: &PanicInfo) -> ! { core::intrinsics::abort() }
-```
-
-要覆盖编译器插入的 `main` shim，我们必须使用 `#![no_main]` 禁用它，然后使用正确的 ABI 和正确的名称创建适当的符号，这需要覆盖编译器的名称改编：
+另外，还需要定义一个[panic 处理函数](panic-handler.html)。
 
 ```rust
 #![feature(lang_items, core_intrinsics, rustc_private)]
