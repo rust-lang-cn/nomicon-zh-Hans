@@ -747,13 +747,13 @@ void bar(struct Bar *arg);
 ```rust
 #[repr(C)]
 pub struct Foo {
-    _data: [u8; 0],
+    _data: (),
     _marker:
         core::marker::PhantomData<(*mut u8, core::marker::PhantomPinned)>,
 }
 #[repr(C)]
 pub struct Bar {
-    _data: [u8; 0],
+    _data: (),
     _marker:
         core::marker::PhantomData<(*mut u8, core::marker::PhantomPinned)>,
 }

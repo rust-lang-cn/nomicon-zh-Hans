@@ -25,7 +25,7 @@ struct MySuperSlice {
 }
 ```
 
-如果这样的类型没有方法来构造它，那么它在很大程度上来看是没啥用的。目前，唯一支持的创建自定义 DST 的方法是使你的类型成为泛型，并执行*非固定大小转换（unsizing coercion）*：
+不幸的是，如果这样的类型没有方法来构造它，那么它在很大程度上来看是没啥用的。目前，唯一支持的创建自定义 DST 的方法是使你的类型成为泛型，并执行*非固定大小转换（unsizing coercion）*：
 
 ```rust
 struct MySuperSliceable<T: ?Sized> {
