@@ -43,7 +43,7 @@ use core::ffi::{c_char, c_int};
 use core::panic::PanicInfo;
 
 // 本程序的入口点。
-#[no_mangle] // 确保将此符号作为 `main` 包含在输出中
+#[unsafe(no_mangle)] // 确保将此符号作为 `main` 包含在输出中
 extern "C" fn main(_argc: c_int, _argv: *const *const c_char) -> c_int {
     0
 }

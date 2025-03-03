@@ -39,4 +39,4 @@ use-boolean-and = true
 "./arc.html" = "./arc-mutex/arc.html"
 
 [rust]
-edition = "2021"
+edition = "2024"

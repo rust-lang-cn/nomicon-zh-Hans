@@ -25,7 +25,7 @@ libc = "0.2.0"
 use libc::size_t;
 
 #[link(name = "snappy")]
-extern {
+unsafe extern "C" {
     fn snappy_max_compressed_length(source_length: size_t) -> size_t;
 }
 
@@ -49,7 +49,7 @@ fn main() {
 use libc::{c_int, size_t};
 
 #[link(name = "snappy")]
-extern {
+unsafe extern {
     fn snappy_compress(input: *const u8,
                        input_length: size_t,
                        compressed: *mut u8,
@@ -224,7 +224,7 @@ mod tests {
 首先，我们假设你有一个 lib 库名字叫`rust_from_c`，其中的`lib.rs`应该包含类似这样的代码：
 
 ```rust
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn hello_from_rust() {
     println!("Hello from Rust!");
 }
@@ -298,7 +298,7 @@ extern fn callback(a: i32) {
 }
 
 #[link(name = "extlib")]
-extern {
+unsafe extern {
    fn register_callback(cb: extern fn(i32)) -> i32;
    fn trigger_callback();
 }
@@ -343,7 +343,7 @@ struct RustObject {
     // 其余的成员...
 }
 
-extern "C" fn callback(target: *mut RustObject, a: i32) {
+unsafe extern "C" fn callback(target: *mut RustObject, a: i32) {
     println!("I'm called from C with value {0}", a);
     unsafe {
         // 在回调函数中更新 RustObject 的内容
@@ -352,7 +352,7 @@ extern "C" fn callback(target: *mut RustObject, a: i32) {
 }
 
 #[link(name = "extlib")]
-extern {
+unsafe extern {
    fn register_callback(target: *mut RustObject,
                         cb: extern fn(*mut RustObject, i32)) -> i32;
    fn trigger_callback();
@@ -442,7 +442,7 @@ unsafe fn kaboom(ptr: *const i32) -> i32 { *ptr }
 
 ```rust,ignore
 #[link(name = "readline")]
-extern {
+unsafe extern {
     static rl_readline_version: libc::c_int;
 }
 
@@ -461,7 +461,7 @@ use std::ffi::CString;
 use std::ptr;
 
 #[link(name = "readline")]
-extern {
+unsafe extern {
     static mut rl_prompt: *const libc::c_char;
 }
 
@@ -489,7 +489,7 @@ fn main() {
 #[cfg(all(target_os = "win32", target_arch = "x86"))]
 #[link(name = "kernel32")]
 #[allow(non_snake_case)]
-extern "stdcall" {
+unsafe extern "stdcall" {
     fn SetEnvironmentVariableA(n: *const u8, v: *const u8) -> libc::c_int;
 }
 # fn main() { }
@@ -527,7 +527,7 @@ crates.io 上的[`libc` crate][libc]包括`libc`模块中的 C 标准库的类�
 在 C 语言中，函数可以是“variadic”，这意味着它们接受可变数量的参数。这在 Rust 中可以通过在外部函数声明的参数列表中指定“...”来实现：
 
 ```no_run
-extern {
+unsafe extern {
     fn foo(x: i32, ...);
 }
 
@@ -562,7 +562,7 @@ fn foo(x: i32, ...) {}
 use libc::c_int;
 
 # #[cfg(hidden)]
-extern "C" {
+unsafe extern "C" {
     /// 注册回调函数
     fn register(cb: Option<extern "C" fn(Option<extern "C" fn(c_int) -> c_int>, c_int) -> c_int>);
 }
@@ -617,8 +617,8 @@ void register(int (*f)(int (*)(int), int)) {
 
 <!-- ignore: using unstable feature -->
 ```rust,ignore
-#[no_mangle]
-extern "C-unwind" fn example() {
+#[unsafe(no_mangle)]
+unsafe extern "C-unwind" fn example() {
     panic!("Uh oh");
 }
 ```
@@ -646,11 +646,11 @@ extern "C-unwind" fn example() {
 <!-- ignore: using unstable feature -->
 ```rust,ignore
 #[link(...)]
-extern "C-unwind" {
+unsafe extern "C-unwind" {
     // 一个可能会抛出异常的 C++ 函数
     fn may_throw();
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C-unwind" fn rust_passthrough() {
     let b = Box::new(5);
     unsafe { may_throw(); }
@@ -679,7 +679,7 @@ extern "C-unwind" fn rust_passthrough() {
 ### `panic` 可以在 ABI 边界处停止
 
 ```rust
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn assert_nonzero(input: u32) {
     assert!(input != 0)
 }
@@ -694,7 +694,7 @@ extern "C" fn assert_nonzero(input: u32) {
 ```rust
 use std::panic::catch_unwind;
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn oh_no() -> i32 {
     let result = catch_unwind(|| {
         panic!("Oops!");
@@ -726,7 +726,7 @@ void bar(void *arg);
 <!-- ignore: requires libc crate -->
 
 ```rust,ignore
-extern "C" {
+unsafe extern "C" {
     pub fn foo(arg: *mut libc::c_void);
     pub fn bar(arg: *mut libc::c_void);
 }
@@ -758,7 +758,7 @@ pub struct Bar {
         core::marker::PhantomData<(*mut u8, core::marker::PhantomPinned)>,
 }
 
-extern "C" {
+unsafe extern "C" {
     pub fn foo(arg: *mut Foo);
     pub fn bar(arg: *mut Bar);
 }
