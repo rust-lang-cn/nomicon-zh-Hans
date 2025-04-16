@@ -71,7 +71,7 @@ struct LotsOfNothing {
 
 安全的代码不需要担心 ZST，但是*不安全的*代码必须小心没有大小的类型的后果。特别是，指针偏移是无操作的，而分配器通常[需要一个非零的大小][alloc]。
 
-请注意，对 ZST 的引用（包括空片），就像所有其他的引用一样，必须是非空的，并且适当地对齐。解引用 ZST 的空指针或未对齐指针是[未定义的行为][ub]，就像其他类型的引用一样。
+请注意，对 ZST 的引用（包括空片），就像所有其他的引用一样，必须是非空的，并且适当地对齐。然而，通过空指针来加载或存储 ZST 类型的数据并不会导致[未定义的行为][ub]，这与其他类型的指针不同。
 
 [alloc]: https://doc.rust-lang.org/std/alloc/trait.GlobalAlloc.html#tymethod.alloc
 [ub]: what-unsafe-does.html
