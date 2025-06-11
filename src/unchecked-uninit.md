@@ -14,11 +14,8 @@ use std::mem::{self, MaybeUninit};
 const SIZE: usize = 10;
 
 let x = {
-    // 创建一个未初始化，类型为 `MaybeUninit` 的数组，
-    // 因为这里声明的是一堆 `MaybeUninit`，不要求初始化，所以 `assume_init` 操作是安全的
-    let mut x: [MaybeUninit<Box<u32>>; SIZE] = unsafe {
-        MaybeUninit::uninit().assume_init()
-    };
+    // 创建一个未初始化，类型为 `MaybeUninit` 的数组
+    let mut x = [const { MaybeUninit::uninit() }; SIZE];
 
     // 因为 drop 一个 `MaybeUninit` 什么都不做，
     // 所以使用直接的裸指针赋值（而非 ptr::write）不会导致原先未初始化的变量被 drop
@@ -31,12 +28,12 @@ let x = {
     unsafe { mem::transmute::<_, [Box<u32>; SIZE]>(x) }
 };
 
-dbg!(x);
+println!("{x:?}");
 ```
 
 这段代码分三步进行：
 
-1. 创建一个`MaybeUninit<T>`的数组。在当前稳定版的 Rust 中，我们必须使用不安全的代码来实现：我们取一些未初始化的内存（`MaybeUninit::uninit()`），并声称我们已经完全初始化了它（[`assume_init()`][assume_init]）。这似乎很荒谬，因为我们没有！这是正确的，因为数组本身完全由`MaybeUninit`组成，实际上不需要初始化。对于大多数其他类型，`MaybeUninit::uninit().assume_init()`会产生一个无效的类型实例，所以你荣获了一些未定义行为。
+1. 创建一个`MaybeUninit<T>`的数组。
 
 2. 初始化数组。这个问题的微妙之处在于，通常情况下，当我们使用`=`赋值给一个 Rust 类型检查器认为已经初始化的值时（比如`x[i]`），存储在左边的旧值会被丢掉。这将是一场灾难。然而，在这种情况下，左边的类型是`MaybeUninit<Box<u32>>`，丢弃这个类型什么都不会发生，关于这个`drop`问题的更多讨论，见下文。
 
