@@ -71,14 +71,11 @@ impl<T> RawVec<T> {
 
 impl<T> Drop for RawVec<T> {
     fn drop(&mut self) {
-        let elem_size = mem::size_of::<T>();
-
-        if self.cap != 0 && elem_size != 0 {
+        println!("RawVec<T> Drop called, deallocating memory");
+        if self.cap != 0 && std::mem::size_of::<T>() > 0 {
+            let layout = std::alloc::Layout::array::<T>(self.cap).unwrap();
             unsafe {
-                alloc::dealloc(
-                    self.ptr.as_ptr() as *mut u8,
-                    Layout::array::<T>(self.cap).unwrap(),
-                );
+                std::alloc::dealloc(self.ptr.as_ptr() as *mut _, layout);
             }
         }
     }
@@ -188,3 +185,19 @@ impl<T> DoubleEndedIterator for RawValIter<T> {
 ```
 
 好啦，迭代器也搞定啦！
+
+我们需要考虑的最后一件事是，当我们的 vector 被 drop 时，它会释放其存活期间分配的内存。对于 ZST，我们没有分配任何内存；事实上，我们从来没有分配过。所以，现在我们的代码存在不健全性：我们仍然试图释放一个用于模拟 vector 中 ZST 的 `NonNull::dangling()` 指针。这意味着如果我们试图释放一些我们从未分配过的东西，就会导致未定义行为（显然，这是有充分理由的）。为了解决这个问题，在我们的 `RawVec` 的 `Drop` trait 中，我们将对其进行调整，以确保我们只释放有大小的类型。
+
+```rust,ignore
+impl<T> Drop for RawVec<T> {
+    fn drop(&mut self) {
+        println!("RawVec<T> Drop called, deallocating memory");
+        if self.cap != 0 && std::mem::size_of::<T>() > 0 {
+            let layout = std::alloc::Layout::array::<T>(self.cap).unwrap();
+            unsafe {
+                std::alloc::dealloc(self.ptr.as_ptr() as *mut _, layout);
+            }
+        }
+    }
+}
+```

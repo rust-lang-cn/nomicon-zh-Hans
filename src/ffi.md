@@ -15,6 +15,33 @@ libc = "0.2.0"
 
 [libc]: https://crates.io/crates/libc
 
+## 准备构建脚本
+
+因为 [snappy](https://github.com/google/snappy) 默认是一个静态库。
+所以输出的产物中没有链接 C++ 标准库。
+为了在 Rust 中使用这个外部库，我们必须手动指定我们希望在项目中链接 stdc++。
+最简单的方法是设置一个构建脚本。
+
+首先编辑 `Cargo.toml`，在 `package` 中加入 `build = "build.rs"`：
+
+```toml
+[package]
+...
+build = "build.rs"
+```
+
+然后在你的工作区根目录下创建一个名为 `build.rs` 的新文件：
+
+```rust
+// build.rs
+fn main() {
+    println!("cargo:rustc-link-lib=dylib=stdc++"); // 对某些环境来说，这一行可能不是必要的。
+    println!("cargo:rustc-link-search=<你的 SNAPPY 库路径>");
+}
+```
+
+要了解更多信息，请阅读 [The Cargo Book - build script](https://doc.rust-lang.org/cargo/reference/build-scripts.html)。
+
 ## 调用外部函数
 
 下面是一个调用外部函数的最小例子，如果你安装了 snappy，它就可以被编译：
@@ -527,7 +554,7 @@ crates.io 上的[`libc` crate][libc]包括`libc`模块中的 C 标准库的类�
 
 ```no_run
 unsafe extern {
-    fn foo(x: i32, ...);
+    fn foo(x: i32, ...) {}
 }
 
 fn main() {
@@ -547,9 +574,9 @@ fn foo(x: i32, ...) {}
 
 ## "空指针优化"
 
-某些 Rust 类型被定义为永不为“空”。这包括引用（`&T`, `&mut T`）, Box（`Box<T>`）, 和函数指针（`extern "abi" fn()`）。当与 C 语言对接时，经常使用可能为“空”的指针，这似乎需要一些混乱的`transmute`和/或不安全的代码来处理与 Rust 类型的转换。然而，尝试构造或者使用这些无效的值**是 undefined behavior**，所以你应当使用如下的变通方法。
+某些 Rust 类型被定义为永不为"空"。这包括引用（`&T`, `&mut T`）, Box（`Box<T>`）, 和函数指针（`extern "abi" fn()`）。当与 C 语言对接时，经常使用可能为"空"的指针，这似乎需要一些混乱的`transmute`和/或不安全的代码来处理与 Rust 类型的转换。然而，尝试构造或者使用这些无效的值**是 undefined behavior**，所以你应当使用如下的变通方法。
 
-作为一种特殊情况，如果一个`enum`正好包含两个变体，其中一个不包含数据，另一个包含上面列出的非空类型的字段，那么它就有资格获得“空指针优化”。这意味着不需要额外的空间来进行判别；相反，空的变体是通过将一个`null`的值放入不可空的字段来表示。这被称为“优化”，但与其他优化不同，它保证适用于符合条件的类型。
+作为一种特殊情况，如果一个`enum`正好包含两个变体，其中一个不包含数据，另一个包含上面列出的非空类型的字段，那么它就有资格获得"空指针优化"。这意味着不需要额外的空间来进行判别；相反，空的变体是通过将一个`null`的值放入不可空的字段来表示。这被称为"优化"，但与其他优化不同，它保证适用于符合条件的类型。
 
 最常见的利用空指针优化的类型是`Option<T>`，其中`None`对应于`null`。所以`Option<extern "C" fn(c_int) -> c_int>`是使用 C ABI（对应于 C 类型`int (*)(int)`）来表示可空函数指针的一种正确方式。
 
@@ -612,7 +639,7 @@ void register(int (*f)(int (*)(int), int)) {
 
 注意 `catch_unwind` 和外部异常的交互行为**是未定义的**，同样，`panic` 和外部异常处理机制的交互也是一样（尤其是 C++ 的 `try`/`catch`）。
 
-### Rust `panic` 与 `"C-unwind"`
+### Rust `panic` 与 "C-unwind"
 
 <!-- ignore: using unstable feature -->
 ```rust,ignore
@@ -640,7 +667,7 @@ unsafe extern "C-unwind" fn example() {
 
 如果 C++ 的栈上包含对象，它们将会被析构。
 
-### C++ `throw` 与 `"C-unwind"`
+### C++ `throw` 与 "C-unwind"
 
 <!-- ignore: using unstable feature -->
 ```rust,ignore
@@ -732,7 +759,7 @@ unsafe extern "C" {
 # fn main() {}
 ```
 
-这是一种完全有效的处理方式。然而，我们可以做得更好一点。为了解决这个问题，一些 C 库会创建一个`struct`，其中结构的细节和内存布局是私有的，这提供了某种程度的类型安全。这些结构被称为“不透明的”。下面是一个例子，在 C 语言中：
+这是一种完全有效的处理方式。然而，我们可以做得更好一点。为了解决这个问题，一些 C 库会创建一个`struct`，其中结构的细节和内存布局是私有的，这提供了某种程度的类型安全。这些结构被称为"不透明的"。下面是一个例子，在 C 语言中：
 
 ```c
 struct Foo; /* Foo 是一个接口，但它的内容不属于公共接口 */
@@ -770,7 +797,7 @@ unsafe extern "C" {
 
 注意，使用空枚举作为 FFI 类型是一个非常糟糕的主意。编译器假设空枚举是无法使用的，所以处理`&Empty`类型的值会是意料之外的，并可能导致错误的程序行为（通过触发未定义行为）。
 
-> **注意：** 最简单的方法还是使用“extern 类型”。但它目前（截至 2021 年 10 月）还不稳定，而且还有一些未解决的问题，更多细节请参见[RFC 页面][extern-type-rfc]和[跟踪 Issue][extern-type-issue]。
+> **注意：** 最简单的方法还是使用"extern 类型"。但它目前（截至 2021 年 10 月）还不稳定，而且还有一些未解决的问题，更多细节请参见[RFC 页面][extern-type-rfc]和[跟踪 Issue][extern-type-issue]。
 
 [extern-type-issue]: https://github.com/rust-lang/rust/issues/43467
 [extern-type-rfc]: https://rust-lang.github.io/rfcs/1861-extern-types.html
