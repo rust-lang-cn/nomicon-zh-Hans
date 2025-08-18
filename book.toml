@@ -1,5 +1,5 @@
 [book]
-author = ["The Rust Project Developers", "Pure White."]
+authors = ["The Rust Project Developers", "Pure White."]
 title = "Rust 秘典（死灵书）"
 description = "高级 Unsafe Rust 编程的黑科技指南"
 language = "zh-Hans"
