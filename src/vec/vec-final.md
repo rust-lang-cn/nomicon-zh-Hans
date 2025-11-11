@@ -34,23 +34,16 @@ impl<T> RawVec<T> {
         assert!(mem::size_of::<T>() != 0, "capacity overflow");
 
         let (new_cap, new_layout) = if self.cap == 0 {
-            (1, Layout::array::<T>(1).unwrap())
+            (1, Layout::array::<T>(1))
         } else {
-            // 保证新申请的内存没有超出 `isize::MAX` 字节
+            // 因为 self.cap <= isize::MAX，所以不会溢出
             let new_cap = 2 * self.cap;
-
-            // `Layout::array` 会检查申请的空间是否小于等于 usize::MAX，
-            // 但是因为 old_layout.size() <= isize::MAX，
-            // 所以这里的 unwrap 永远不可能失败
-            let new_layout = Layout::array::<T>(new_cap).unwrap();
-            (new_cap, new_layout)
+            (new_cap, Layout::array::<T>(new_cap))
         };
 
-        // 保证新申请的内存没有超出 `isize::MAX` 字节
-        assert!(
-            new_layout.size() <= isize::MAX as usize,
-            "Allocation too large"
-        );
+        // `Layout::array` 会检查分配的字节数是否在 1..=isize::MAX 之间，否则会返回错误。
+        // 因此，不可能出现分配 0 字节的情况。
+        let new_layout = new_layout.expect("Allocation too large");
 
         let new_ptr = if self.cap == 0 {
             unsafe { alloc::alloc(new_layout) }
