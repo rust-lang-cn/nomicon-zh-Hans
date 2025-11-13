@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<html lang="{{ language }}" class="{{ default_theme }}" dir="{{ text_direction }}">
+<html lang="{{ language }}" class="{{ default_theme }} sidebar-visible" dir="{{ text_direction }}">
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
@@ -39,9 +39,9 @@
         {{/if}}
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" href="{{ path_to_root }}highlight.css">
-        <link rel="stylesheet" href="{{ path_to_root }}tomorrow-night.css">
-        <link rel="stylesheet" href="{{ path_to_root }}ayu-highlight.css">
+        <link rel="stylesheet" id="highlight-css" href="{{ path_to_root }}highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="{{ path_to_root }}tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="{{ path_to_root }}ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
         {{#each additional_css}}
@@ -53,7 +53,7 @@
         <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
         {{/if}}
     </head>
-    <body class="sidebar-visible no-js">
+    <body class="no-js">
     <div id="body-container">
         <!-- Provide site root to javascript -->
         <script>
@@ -104,8 +104,8 @@
                 sidebar = 'hidden';
             }
             sidebar_toggle.checked = sidebar === 'visible';
-            body.classList.remove('sidebar-visible');
-            body.classList.add("sidebar-" + sidebar);
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
