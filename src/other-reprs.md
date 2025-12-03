@@ -1,6 +1,6 @@
 # 可选的数据布局
 
-Rust 允许你指定不同于默认的数据布局策略，并为你提供了[不安全代码指南](注意，它是**非**正式的)。
+Rust 允许你指定不同于默认的数据布局策略。
 
 ## repr(C)
 
@@ -83,7 +83,6 @@ assert_eq!(16, size_of::<MyReprOption<&u16>>());
 
 这是`repr(C)`和`repr(Rust)`的一个修改版本，它与`repr(packed)`不兼容。
 
-[不安全代码指南]: https://rust-lang.github.io/unsafe-code-guidelines/layout.html
 [ub loads]: https://github.com/rust-lang/rust/issues/27060
 [issue-60405]: https://github.com/rust-lang/rust/issues/60405
 [`unsafecell`]: https://doc.rust-lang.org/std/cell/struct.UnsafeCell.html
