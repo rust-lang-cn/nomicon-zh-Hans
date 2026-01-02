@@ -5,3 +5,6 @@ book
 linkcheck
 linkchecker
 linkcheck.sh
+
+# claude
+.claude/settings.local.json

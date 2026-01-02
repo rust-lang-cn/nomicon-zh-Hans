@@ -139,6 +139,21 @@
             }
         </script>
 
+        <!-- Fix sidebar links for subdirectory pages (workaround for mdBook issue #2341) -->
+        <script>
+            (function() {
+                if (path_to_root === "") return; // No fix needed for root-level pages
+                var sidebarLinks = document.querySelectorAll('#sidebar a[href]');
+                sidebarLinks.forEach(function(link) {
+                    var href = link.getAttribute('href');
+                    // Only fix relative links (not absolute URLs or already prefixed)
+                    if (href && !href.startsWith('http') && !href.startsWith('/') && !href.startsWith('#') && !href.startsWith(path_to_root)) {
+                        link.setAttribute('href', path_to_root + href);
+                    }
+                });
+            })();
+        </script>
+
         <div id="page-wrapper" class="page-wrapper">
 
             <div class="page">
