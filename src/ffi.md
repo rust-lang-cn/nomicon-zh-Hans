@@ -381,7 +381,7 @@ unsafe extern "C" fn callback(target: *mut RustObject, a: i32) {
 #[link(name = "extlib")]
 unsafe extern {
    fn register_callback(target: *mut RustObject,
-                        cb: extern fn(*mut RustObject, i32)) -> i32;
+                        cb: unsafe extern fn(*mut RustObject, i32)) -> i32;
    fn trigger_callback();
 }
 
@@ -554,7 +554,7 @@ crates.io 上的[`libc` crate][libc]包括`libc`模块中的 C 标准库的类�
 
 ```no_run
 unsafe extern {
-    fn foo(x: i32, ...) {}
+    fn foo(x: i32, ...);
 }
 
 fn main() {
