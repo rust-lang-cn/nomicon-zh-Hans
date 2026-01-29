@@ -106,7 +106,7 @@ fn main() {
     // ... 用某种方式将锁分发到各个线程(thread::spawn) ...
 
     // 尝试将原子变量设置为 true，以此来获得锁
-    while lock.compare_and_swap(false, true, Ordering::Acquire) { }
+    while lock.compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed).is_err() { }
     // 从循环中跳出，说明此时已经获取了锁
 
     // ... 恐怖的数据访问 ...
