@@ -325,7 +325,7 @@ extern fn callback(a: i32) {
 }
 
 #[link(name = "extlib")]
-unsafe extern {
+unsafe extern "C" {
    fn register_callback(cb: extern fn(i32)) -> i32;
    fn trigger_callback();
 }
@@ -379,9 +379,9 @@ unsafe extern "C" fn callback(target: *mut RustObject, a: i32) {
 }
 
 #[link(name = "extlib")]
-unsafe extern {
+unsafe extern "C" {
    fn register_callback(target: *mut RustObject,
-                        cb: unsafe extern fn(*mut RustObject, i32)) -> i32;
+                        cb: unsafe extern "C" fn(*mut RustObject, i32)) -> i32;
    fn trigger_callback();
 }
 
@@ -469,7 +469,7 @@ unsafe fn kaboom(ptr: *const i32) -> i32 { *ptr }
 
 ```rust,ignore
 #[link(name = "readline")]
-unsafe extern {
+unsafe extern "C" {
     static rl_readline_version: libc::c_int;
 }
 
@@ -488,7 +488,7 @@ use std::ffi::CString;
 use std::ptr;
 
 #[link(name = "readline")]
-unsafe extern {
+unsafe extern "C" {
     static mut rl_prompt: *const libc::c_char;
 }
 
@@ -553,7 +553,7 @@ crates.io 上的[`libc` crate][libc]包括`libc`模块中的 C 标准库的类�
 在 C 语言中，函数可以是“variadic”，这意味着它们接受可变数量的参数。这在 Rust 中可以通过在外部函数声明的参数列表中指定“...”来实现：
 
 ```no_run
-unsafe extern {
+unsafe extern "C" {
     fn foo(x: i32, ...);
 }
 
