@@ -48,7 +48,7 @@ fn main() {
 
 （是的，自定义 DST 目前仅仅是一个基本半成品的功能。）
 
-## 零大小类型 (ZSTs)
+## 零大小类型 (ZSTs) {#zero-sized-types-zsts}
 
 Rust 也允许类型指定他们不占空间：
 
