@@ -53,7 +53,7 @@ extern "C" fn main(_argc: c_int, _argv: *const *const c_char) -> c_int {
 #[lang = "eh_personality"]
 fn rust_eh_personality() {}
 #[panic_handler]
-fn panic_handler(_info: &PanicInfo) -> ! { core::intrinsics::abort() }
+fn panic_handler(_info: &PanicInfo) -> ! { core::intrinsics::abort_immediate() }
 ```
 
 如果您正在使用一个没有通过 rustup 提供标准库二进制版本的目标（这可能意味着您正在自己构建 `core` crate）并且需要 compiler-rt intrinsics（即您可能在构建可执行文件时遇到链接错误：`undefined reference to '__aeabi_memcpy'`），您需要手动链接到 [`compiler_builtins` crate] 来获取这些 intrinsics 并解决链接错误。
