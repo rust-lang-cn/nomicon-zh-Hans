@@ -86,7 +86,7 @@ impl<T> Drop for Vec<T> { /* … */ }
 
 但是这在某些场景下，会导致过于严格，这也是为啥标准库使用了一个不稳定并且`unsafe`的属性来切换回旧的`unchecked`的 drop 检查行为，也是接下来这个文档所警告的：`#[may_dangle]`属性。
 
-### 一个例外：标准库的特殊情况及不稳定的`#[may_dangle]`
+### 一个例外：标准库的特殊情况及不稳定的`#[may_dangle]` {#an-exception-the-special-case-of-the-standard-library-and-its-unstable-may_dangle}
 
 如果你只是写自己的库代码，那你可以跳过这章；但是如果你想知道标准库中真正的`Vec`是怎么实现的，你会发现它仍然需要`_owns_T: PhantomData<T>`字段来保证可靠性。
 

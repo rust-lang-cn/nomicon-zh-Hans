@@ -272,7 +272,7 @@ crate-type = ["cdylib"]
 
 接下来，执行`cargo build`，Rust 侧就搞定啦！
 
-[外部调用规约]: ffi.md#外部调用规约
+[外部调用规约]: ffi.md#foreign-calling-conventions
 
 ### C 代码侧
 
@@ -506,7 +506,7 @@ fn main() {
 
 注意，所有“可变全局变量”的交互都是不安全的，包括读和写。处理全局可变状态需要非常小心。
 
-## 外部调用规约
+## 外部调用规约 {#foreign-calling-conventions}
 
 大多数外部代码都暴露了一个 C ABI，Rust 在调用外部函数时默认使用平台的 C 调用约定。一些外部函数，最明显的是 Windows API，使用了其他的调用约定。Rust 提供了一种方法来告诉编译器应该使用哪种约定：
 
@@ -548,7 +548,7 @@ Rust 的 Box 类型（`Box<T>`）使用不可为空的指针作为句柄，指�
 
 crates.io 上的[`libc` crate][libc]包括`libc`模块中的 C 标准库的类型别名和函数定义，Rust 默认与`libc`和`libm`链接。
 
-## Variadic 函数
+## Variadic 函数 {#variadic-functions}
 
 在 C 语言中，函数可以是“variadic”，这意味着它们接受可变数量的参数。这在 Rust 中可以通过在外部函数声明的参数列表中指定“...”来实现：
 

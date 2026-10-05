@@ -22,7 +22,7 @@ Rust 允许你指定不同于默认的数据布局策略。
 
 `#[repr(transparent)]`只能用于只有单个非零大小字段（可能还有其他零大小字段）的结构或者单变体 enum 中。其效果是，整个结构的布局和 ABI 被保证与该字段相同。
 
-> 注意：有一个叫做`transparent_unions`的 nightly 的特性，可以让你对 union 指定`repr(transparent)`。不过由于设计上的一些顾虑，这个特性目前还未稳定，参考[issue-60405](issue-60405)。
+> 注意：有一个叫做`transparent_unions`的 nightly 的特性，可以让你对 union 指定`repr(transparent)`。不过由于设计上的一些顾虑，这个特性目前还未稳定，参考[issue-60405][issue-60405]。
 
 我们的目标是使单一字段和结构/枚举之间的转换成为可能。一个例子是[`UnsafeCell`]，它可以被转换为它所包装的类型。（[`UnsafeCell`]也用了一个不稳定的特性[no_niche][no-niche-pull]，所以当它嵌套其它类型的时候，它的 ABI 也并没有一个稳定的保证。）
 
