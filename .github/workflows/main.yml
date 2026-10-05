@@ -4,7 +4,7 @@ on:
   merge_group:
 
 env:
-  MDBOOK_VERSION: 0.5.1
+  MDBOOK_VERSION: 0.5.4
 
 jobs:
   test:
@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: true
     - name: Update rustup
       run: rustup self update
     - name: Install Rust
@@ -31,6 +33,10 @@ jobs:
         mdbook --version
     - name: Run tests
       run: mdbook test
+    - name: Build books
+      run: ./build.sh
+    - name: Check for missing assets
+      run: python3 .github/scripts/check-assets.py book
     - name: Check for broken links
       run: |
         curl -sSLo linkcheck.sh \
