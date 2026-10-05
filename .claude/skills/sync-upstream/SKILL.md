@@ -24,7 +24,7 @@ Use regex pattern: `目前翻译基于 commit：([a-f0-9]+)，基于时间：(\d
 Get the latest commit from upstream:
 
 ```bash
-gh api repos/rust-lang/nomicon/commits/main --jq '.sha'
+gh api repos/rust-lang/nomicon/commits/HEAD --jq '.sha'
 ```
 
 Compare with the extracted commit hash. If identical, report "Already up to date" and exit.
